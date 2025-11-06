@@ -8,11 +8,11 @@ import { toast } from 'sonner'
 
 export const Navbar = () => {
 
-  const { profilepic } = useSelector((state: RootState) => state.user)
+  const { nombre } = useSelector((state: RootState) => state.user)
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const defaultProfilePic = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80&q=80'
+  const defaultProfilePic = '/defProfile.jpg'
   const backgroundImage = "/backgroundNavBar.jpg"
   const logoImage = "/alzheon.png"
 
@@ -58,19 +58,19 @@ export const Navbar = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-white/5 rounded-[40px]"></div>
           </div>
           
-          <div className="relative flex items-center gap-4 px-6 py-3 h-[50px] w-auto min-w-fit">
-            {profilepic ? (
+                    <div className="relative flex items-center gap-4 px-6 py-3 h-[50px] w-auto min-w-fit">
+            {nombre ? (
               <>
                 <div className="w-[36px] h-[36px] rounded-full overflow-hidden">
                   <img 
-                    src={profilepic && profilepic.trim() !== '' ? profilepic : defaultProfilePic} 
+                    src={defaultProfilePic} 
                     alt="Usuario" 
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="w-[1px] h-[30px] bg-black/20"></div>
                 <div className="relative group">
-                  <span className="font-medium text-[18px] text-black cursor-pointer">Juan</span>
+                  <span className="font-medium text-[18px] text-black cursor-pointer">{nombre}</span>
                   <div className="absolute top-full left-0 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-2 min-w-[150px]">
                     <Link to='/profile' className="block px-3 py-2 text-black hover:bg-black/10 rounded">Perfil</Link>
                     <span onClick={handleLogout} className="block px-3 py-2 text-black hover:bg-black/10 rounded cursor-pointer">Cerrar sesión</span>
