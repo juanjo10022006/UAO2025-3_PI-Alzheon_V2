@@ -17,15 +17,13 @@ const usuarioSchema = new mongoose.Schema({
     rol: {
         type: String,
         enum: ['paciente', 'cuidador/familiar', 'medico'],
-        default: 'paciente'
+        required: true
     },
     // Relación para cuidadores/familiares
     pacienteAsociado: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario',
-        required: function() {
-            return this.rol === 'cuidador/familiar';
-        }
+        required: false
     },
     // Relación inversa para pacientes (múltiples cuidadores)
     cuidadores: [{
