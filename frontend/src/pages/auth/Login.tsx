@@ -4,10 +4,12 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { AppDispatch } from '../../store/store';
 import { startLogin } from '../../store/thunks/authThunk';
+import { RegisterForm } from '../../components/auth/RegisterForm';
 
 export const Login = () => {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [showRegister, setShowRegister] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
@@ -96,12 +98,22 @@ export const Login = () => {
             </form>
             
             {/* Register Link */}
-            <p className="text-center text-[16px] font-semibold text-black/42 mt-6">
+            <button 
+              onClick={() => setShowRegister(true)}
+              className="text-center text-[16px] font-semibold text-black/42 mt-6 hover:text-black/60 transition-colors cursor-pointer"
+            >
               Regístrate aquí
-            </p>
+            </button>
           </div>
         </div>
       </div>
+      
+      {/* Register Form Modal */}
+      {showRegister && (
+        <div className="fixed inset-0 z-50">
+          <RegisterForm onBackToLogin={() => setShowRegister(false)} />
+        </div>
+      )}
     </div>
   );
 };

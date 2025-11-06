@@ -30,7 +30,7 @@ export const startLogin = (form: Record<string, unknown>) => {
     try {
       await fetchLogin({
         email: String(form.email),
-        password: String(form.login_password)
+        password: String(form.login_password || form.password)
       })
       dispatch(login())
 
@@ -57,7 +57,7 @@ export const checkAuthStatus = () => {
       dispatch(login())
       dispatch(setUser(userData.user))
     } catch (error) {
-      if (error instanceof Error) dispatch(logout(error.message))
+      if (error instanceof Error) dispatch(logout({ errorMessage: error.message }))
     }
   }
 }

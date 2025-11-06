@@ -1,17 +1,16 @@
 
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
 
 export interface UserResponse {
-  id: string
-  name: string
+  _id: string
+  nombre: string
   email: string
-  phone: string
-  profilepic: string
+  rol: string
 }
 
 export const fetchRegister = async (form: Record<string, unknown>) => {
-  const response = await fetch(`${API_BASE_URL}/users`, {
+  const response = await fetch(`${API_BASE_URL}/api/usuarios`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -30,7 +29,7 @@ export const fetchRegister = async (form: Record<string, unknown>) => {
 }
 
 export const fetchLogin = async (credentials: { email: string; password: string }) => {
-  const response = await fetch(`${API_BASE_URL}/login`, {
+  const response = await fetch(`${API_BASE_URL}/api/login`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -50,7 +49,7 @@ export const fetchLogin = async (credentials: { email: string; password: string 
 }
 
 export const fetchLogout = async () => {
-  const response = await fetch(`${API_BASE_URL}/logout`, {
+  const response = await fetch(`${API_BASE_URL}/api/logout`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -63,7 +62,7 @@ export const fetchLogout = async () => {
 }
 
 export const fetchUserInfo = async (): Promise<UserResponse> => {
-  const response = await fetch(`${API_BASE_URL}/user`, {
+  const response = await fetch(`${API_BASE_URL}/api/user`, {
     method: 'GET',
     credentials: 'include'
   })
@@ -126,7 +125,7 @@ export const fetchUpdateUser = async (id: string, data: FormData | Record<string
 }
 
 export const fetchVerifyCookie = async() => {
-  const response = await fetch(`${API_BASE_URL}/verify`, {
+  const response = await fetch(`${API_BASE_URL}/api/verify`, {
     method: 'GET',
     credentials: 'include'
   })
