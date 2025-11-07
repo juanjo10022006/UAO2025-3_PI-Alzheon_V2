@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Login } from './pages/auth/Login'
 import { PatientRoute } from './pages/auth/PatientRoute'
+import { CuidadorRoute } from './pages/auth/CuidadorRoute'
 import { PatientApp } from './pages/paciente/PatientApp'
+import { CuidadorApp } from './pages/cuidador/CuidadorApp'
 import { RootRedirect } from './pages/RootRedirect'
 
 export const Alzheon = () => {
@@ -12,6 +14,10 @@ export const Alzheon = () => {
 
       <Route element={<PatientRoute />}>
         <Route path="/paciente/*" element={<PatientApp />} />
+      </Route>
+
+      <Route element={<CuidadorRoute />}>
+        <Route path="/cuidador/*" element={<CuidadorApp />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

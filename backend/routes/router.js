@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import Usuario from '../models/usuario.js';
 import * as authController from '../controllers/authController.js';
 import * as pacienteController from '../controllers/pacienteController.js';
+import * as cuidadorController from '../controllers/cuidadorController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -291,6 +292,57 @@ router.put('/paciente/perfil/password',
     authMiddleware, 
     requireRole('paciente'),
     pacienteController.updatePatientPassword
+);
+
+// ========== RUTAS DEL CUIDADOR ==========
+
+// Obtener paciente asociado
+router.get('/cuidador/paciente',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.getAssociatedPatient
+);
+
+// Obtener fotos del paciente
+router.get('/cuidador/fotos',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.getPatientPhotos
+);
+
+// Crear nueva foto para el paciente
+router.post('/cuidador/fotos',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.createPatientPhoto
+);
+
+// Actualizar foto
+router.put('/cuidador/fotos/:photoId',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.updatePatientPhoto
+);
+
+// Eliminar foto
+router.delete('/cuidador/fotos/:photoId',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.deletePatientPhoto
+);
+
+// Obtener grabaciones del paciente
+router.get('/cuidador/grabaciones',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.getPatientRecordings
+);
+
+// Obtener estadísticas del paciente
+router.get('/cuidador/estadisticas',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.getPatientStats
 );
 
 export default router;
