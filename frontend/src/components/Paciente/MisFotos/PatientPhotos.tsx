@@ -125,10 +125,10 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
       )}
 
       {selectedPhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 overflow-y-auto py-8">
           <div className="absolute inset-0 bg-[#050914]/80" onClick={closeModal} />
 
-          <div className="relative glass-panel w-full max-w-4xl p-6 lg:p-10 text-white">
+          <div className="relative glass-panel w-full max-w-4xl p-6 lg:p-10 text-white my-auto max-h-[90vh] overflow-y-auto patient-scroll">
             <button
               onClick={closeModal}
               className="absolute top-4 right-4 glass-button rounded-full px-4 py-2 text-sm font-semibold"
