@@ -12,7 +12,7 @@ export const Navbar = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const defaultProfilePic = '/defProfile.jpg'
+  const defaultProfilePic = '/defProfile.png'
   const backgroundImage = "/backgroundNavBar.jpg"
   const logoImage = "/alzheon.png"
 
