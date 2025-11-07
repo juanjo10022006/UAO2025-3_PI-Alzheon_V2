@@ -16,6 +16,8 @@ export const useAuth = () => {
 
   const isAuthenticated = authState.status === 'authenticated'
   const isPatient = userState.rol?.toLowerCase() === 'paciente'
+  const isCuidador = userState.rol?.toLowerCase() === 'cuidador/familiar'
+  const isMedico = userState.rol?.toLowerCase() === 'medico'
 
   return {
     status: authState.status,
@@ -23,5 +25,7 @@ export const useAuth = () => {
     user: userState,
     isAuthenticated,
     isPatient,
+    isCuidador,
+    isMedico,
   }
 }

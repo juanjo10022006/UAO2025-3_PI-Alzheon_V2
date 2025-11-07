@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 
 export const RootRedirect = () => {
-  const { status, isAuthenticated, isPatient } = useAuth()
+  const { status, isAuthenticated, isPatient, isCuidador, isMedico } = useAuth()
 
   if (status === 'checking') {
     return (
@@ -15,8 +15,16 @@ export const RootRedirect = () => {
     )
   }
 
-  if (isAuthenticated && isPatient) {
-    return <Navigate to="/paciente/dashboard" replace />
+  if (isAuthenticated) {
+    if (isPatient) {
+      return <Navigate to="/paciente/dashboard" replace />
+    }
+    if (isCuidador) {
+      return <Navigate to="/cuidador/dashboard" replace />
+    }
+    if (isMedico) {
+      return <Navigate to="/medico/dashboard" replace />
+    }
   }
 
   return <Navigate to="/login" replace />
