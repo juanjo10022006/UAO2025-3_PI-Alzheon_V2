@@ -31,6 +31,9 @@ app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 
+// Servir archivos estáticos desde la carpeta uploads
+app.use('/uploads', express.static('uploads'));
+
 app.use('/api', router);
 
 connectDB();

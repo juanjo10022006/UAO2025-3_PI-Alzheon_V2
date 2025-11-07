@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 package-lock.json
+README.md
+API_TESTING.md
+IMPLEMENTATION_SUMMARY.md
 
 # Editor directories and files
 .vscode/*

@@ -1,21 +1,65 @@
 import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Usuario from '../models/usuario.js';
+import * as authController from '../controllers/authController.js';
+import * as pacienteController from '../controllers/pacienteController.js';
+import { authMiddleware, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Ruta de prueba
-router.get('/', (req, res) => {
-    res.send('<h1>Estoy funcionando!</h1>');
+// Configurar __dirname para ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Configurar multer para subir archivos de audio
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.join(__dirname, '../uploads/'));
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'audio-' + uniqueSuffix + path.extname(file.originalname));
+    }
 });
+
+const upload = multer({ 
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /audio\/(mpeg|mp3|wav|webm|ogg)/;
+        if (allowedTypes.test(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Tipo de archivo no permitido. Solo archivos de audio.'));
+        }
+    }
+});
+
+// ========== RUTA DE PRUEBA ==========
+router.get('/', (req, res) => {
+    res.send('<h1>API Alzheon funcionando correctamente!</h1>');
+});
+
+// ========== RUTAS DE AUTENTICACIÓN ==========
+router.post('/login', authController.login);
+router.post('/logout', authController.logout);
+router.get('/verify', authController.verify);
+router.get('/user', authMiddleware, authController.getUserInfo);
 
 // ========== RUTAS DE USUARIOS ==========
 
+// Registrar nuevo usuario
+router.post('/usuarios', authController.register);
+
 // Obtener todos los usuarios
-router.get('/usuarios', async (req, res) => {
+router.get('/usuarios', authMiddleware, async (req, res) => {
     try {
         const usuarios = await Usuario.find()
+            .select('-password')
             .populate('pacienteAsociado', 'nombre email')
             .populate('cuidadores', 'nombre email')
             .populate('pacientesAsignados', 'nombre email');
@@ -26,9 +70,10 @@ router.get('/usuarios', async (req, res) => {
 });
 
 // Obtener usuario por ID
-router.get('/usuarios/:id', async (req, res) => {
+router.get('/usuarios/:id', authMiddleware, async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.params.id)
+            .select('-password')
             .populate('pacienteAsociado', 'nombre email')
             .populate('cuidadores', 'nombre email')
             .populate('pacientesAsignados', 'nombre email');
@@ -42,132 +87,14 @@ router.get('/usuarios/:id', async (req, res) => {
     }
 });
 
-// Login
-router.post('/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        
-        // Buscar usuario por email
-        const usuario = await Usuario.findOne({ email });
-        if (!usuario) {
-            return res.status(401).json({ msg: 'El usuario o la contraseña son incorrectas' });
-        }
-        
-        // Verificar contraseña
-        const passwordMatch = await bcrypt.compare(password, usuario.password);
-        if (!passwordMatch) {
-            return res.status(401).json({ msg: 'El usuario o la contraseña son incorrectas' });
-        }
-        
-        // Crear JWT token
-        const token = jwt.sign(
-            { id: usuario._id, email: usuario.email },
-            process.env.JWT_SECRET || 'fallback_secret',
-            { expiresIn: '24h' }
-        );
-        
-        // Configurar cookie
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 24 * 60 * 60 * 1000 // 24 horas
-        });
-        
-        res.json({ msg: 'Login exitoso' });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Logout
-router.post('/logout', (req, res) => {
-    res.clearCookie('token');
-    res.json({ msg: 'Logout exitoso' });
-});
-
-// Verificar cookie
-router.get('/verify', async (req, res) => {
-    try {
-        const token = req.cookies?.token;
-        
-        if (!token) {
-            return res.status(401).json({ msg: 'No autenticado' });
-        }
-        
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-        const usuario = await Usuario.findById(decoded.id).select('-password');
-        
-        if (!usuario) {
-            return res.status(401).json({ msg: 'Usuario no encontrado' });
-        }
-        
-        res.json({ user: usuario });
-    } catch (error) {
-        res.status(401).json({ msg: 'Token inválido' });
-    }
-});
-
-// obtener info user autenticado
-router.get('/user', async (req, res) => {
-    try {
-        const token = req.cookies?.token;
-        
-        if (!token) {
-            return res.status(401).json({ msg: 'No autenticado' });
-        }
-        
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-        const usuario = await Usuario.findById(decoded.id).select('-password');
-        
-        if (!usuario) {
-            return res.status(401).json({ msg: 'Usuario no encontrado' });
-        }
-        
-        res.json(usuario);
-    } catch (error) {
-        res.status(401).json({ msg: 'Token inválido' });
-    }
-});
-
-// Crear nuevo usuario
-router.post('/usuarios', async (req, res) => {
-    try {
-        const { password, ...userData } = req.body;
-        
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-        
-        const nuevoUsuario = new Usuario({
-            ...userData,
-            password: hashedPassword
-        });
-        
-        await nuevoUsuario.save();
-        
-        // Si es un cuidador/familiar, actualizar el paciente asociado
-        if (nuevoUsuario.rol === 'cuidador/familiar' && nuevoUsuario.pacienteAsociado) {
-            await Usuario.findByIdAndUpdate(
-                nuevoUsuario.pacienteAsociado,
-                { $push: { cuidadores: nuevoUsuario._id } }
-            );
-        }
-        
-        const { password: _, ...userResponse } = nuevoUsuario.toObject();
-        res.status(201).json(userResponse);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
 // Actualizar usuario
-router.put('/usuarios/:id', async (req, res) => {
+router.put('/usuarios/:id', authMiddleware, async (req, res) => {
     try {
         const usuario = await Usuario.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true, runValidators: true }
-        );
+        ).select('-password');
         
         if (!usuario) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -179,7 +106,7 @@ router.put('/usuarios/:id', async (req, res) => {
 });
 
 // Eliminar usuario
-router.delete('/usuarios/:id', async (req, res) => {
+router.delete('/usuarios/:id', authMiddleware, async (req, res) => {
     try {
         const usuario = await Usuario.findById(req.params.id);
         
@@ -213,7 +140,7 @@ router.delete('/usuarios/:id', async (req, res) => {
 // ========== RUTAS ESPECÍFICAS DE RELACIONES ==========
 
 // Asignar cuidador a paciente
-router.post('/usuarios/:pacienteId/cuidadores/:cuidadorId', async (req, res) => {
+router.post('/usuarios/:pacienteId/cuidadores/:cuidadorId', authMiddleware, async (req, res) => {
     try {
         const paciente = await Usuario.findById(req.params.pacienteId);
         const cuidador = await Usuario.findById(req.params.cuidadorId);
@@ -243,7 +170,7 @@ router.post('/usuarios/:pacienteId/cuidadores/:cuidadorId', async (req, res) => 
 });
 
 // Obtener cuidadores de un paciente
-router.get('/usuarios/:pacienteId/cuidadores', async (req, res) => {
+router.get('/usuarios/:pacienteId/cuidadores', authMiddleware, async (req, res) => {
     try {
         const paciente = await Usuario.findById(req.params.pacienteId)
             .populate('cuidadores', 'nombre email');
@@ -259,7 +186,7 @@ router.get('/usuarios/:pacienteId/cuidadores', async (req, res) => {
 });
 
 // Asignar paciente a médico
-router.post('/usuarios/:medicoId/pacientes/:pacienteId', async (req, res) => {
+router.post('/usuarios/:medicoId/pacientes/:pacienteId', authMiddleware, async (req, res) => {
     try {
         const medico = await Usuario.findById(req.params.medicoId);
         const paciente = await Usuario.findById(req.params.pacienteId);
@@ -284,7 +211,7 @@ router.post('/usuarios/:medicoId/pacientes/:pacienteId', async (req, res) => {
 });
 
 // Obtener pacientes asignados a un médico
-router.get('/usuarios/:medicoId/pacientes', async (req, res) => {
+router.get('/usuarios/:medicoId/pacientes', authMiddleware, async (req, res) => {
     try {
         const medico = await Usuario.findById(req.params.medicoId)
             .populate('pacientesAsignados', 'nombre email');
@@ -300,10 +227,11 @@ router.get('/usuarios/:medicoId/pacientes', async (req, res) => {
 });
 
 // Obtener usuarios por rol
-router.get('/usuarios/rol/:rol', async (req, res) => {
+router.get('/usuarios/rol/:rol', authMiddleware, async (req, res) => {
     try {
         const { rol } = req.params;
         const usuarios = await Usuario.find({ rol })
+            .select('-password')
             .populate('pacienteAsociado', 'nombre email')
             .populate('cuidadores', 'nombre email')
             .populate('pacientesAsignados', 'nombre email');
@@ -312,5 +240,57 @@ router.get('/usuarios/rol/:rol', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+// ========== RUTAS DEL PACIENTE ==========
+
+// Obtener fotos del paciente
+router.get('/paciente/fotos', 
+    authMiddleware, 
+    requireRole('paciente'), 
+    pacienteController.getPatientPhotos
+);
+
+// Subir grabación de audio
+router.post('/paciente/grabar', 
+    authMiddleware, 
+    requireRole('paciente'),
+    upload.single('audio'),
+    pacienteController.uploadRecording
+);
+
+// Obtener grabaciones del paciente
+router.get('/paciente/grabaciones', 
+    authMiddleware, 
+    requireRole('paciente'),
+    pacienteController.getPatientRecordings
+);
+
+// Obtener configuración del paciente
+router.get('/paciente/configuracion', 
+    authMiddleware, 
+    requireRole('paciente'),
+    pacienteController.getPatientSettings
+);
+
+// Actualizar configuración de recordatorios
+router.put('/paciente/configuracion', 
+    authMiddleware, 
+    requireRole('paciente'),
+    pacienteController.updatePatientSettings
+);
+
+// Actualizar perfil del paciente
+router.put('/paciente/perfil', 
+    authMiddleware, 
+    requireRole('paciente'),
+    pacienteController.updatePatientProfile
+);
+
+// Cambiar contraseña del paciente
+router.put('/paciente/perfil/password', 
+    authMiddleware, 
+    requireRole('paciente'),
+    pacienteController.updatePatientPassword
+);
 
 export default router;
