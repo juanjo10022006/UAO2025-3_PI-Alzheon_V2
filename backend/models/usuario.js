@@ -35,6 +35,14 @@ const usuarioSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario'
     }]
+    ,
+    // Campos para recuperación de contraseña
+    resetPasswordToken: {
+        type: String
+    },
+    resetPasswordExpires: {
+        type: Date
+    }
 }, {
     timestamps: true
 });

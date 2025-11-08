@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Login } from './pages/auth/Login'
+import ResetPassword from './pages/auth/ResetPassword'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { PatientRoute } from './pages/auth/PatientRoute'
 import { CuidadorRoute } from './pages/auth/CuidadorRoute'
@@ -14,7 +15,8 @@ export const Alzheon = () => {
       <Route path="/" element={<LandingPage />} />
       <Route path="/app" element={<RootRedirect />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<RegisterPage />} />
+  <Route path="/register" element={<RegisterPage />} />
+  <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<PatientRoute />}>
         <Route path="/paciente/*" element={<PatientApp />} />

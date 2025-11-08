@@ -45,3 +45,20 @@ export const buildReminderHtml = (nombre, motivationalMessage) => {
         </div>
     `;
 };
+
+export const buildResetPasswordHtml = (nombre, resetLink) => {
+    return `
+        <div style="font-family:Arial,Helvetica,sans-serif;line-height:1.5;color:#111;"> 
+            <div style="max-width:600px;margin:0 auto;background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85));padding:24px;border-radius:16px;border:1px solid rgba(0,0,0,0.06);box-shadow:0 6px 18px rgba(0,0,0,0.08);">
+                <h2 style="margin:0 0 8px 0;font-size:20px;color:#0b1221">Hola ${nombre || 'usuario'}</h2>
+                <p style="margin:0 0 12px 0;color:#1f2937">Hemos recibido una solicitud para restablecer tu contraseña. Haz clic en el botón de abajo para establecer una nueva contraseña.</p>
+                <div style="text-align:center;margin:18px 0;">
+                    <a href="${resetLink}" target="_blank" style="display:inline-block;padding:12px 20px;border-radius:12px;background:#0f1724;color:#fff;text-decoration:none;font-weight:600;">Restablecer contraseña</a>
+                </div>
+                <p style="margin:0 0 8px 0;color:#374151">Si no solicitaste este cambio, puedes ignorar este correo.</p>
+                <p style="margin:0 0 8px 0;color:#6b7280">Este enlace expirará en 1 hora.</p>
+                <p style="margin:14px 0 0 0;color:#6b7280">Saludos,<br/>Equipo Alzheon</p>
+            </div>
+        </div>
+    `;
+};

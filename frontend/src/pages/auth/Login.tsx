@@ -12,6 +12,10 @@ export const Login = () => {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [showRegister, setShowRegister] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotStatus, setForgotStatus] = useState<null | { ok: boolean; msg: string }>(null);
+  const [forgotLoading, setForgotLoading] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
@@ -109,6 +113,14 @@ export const Login = () => {
             >
               Regístrate aquí
             </button>
+            
+            {/* Forgot password link */}
+            <button
+              onClick={() => { setShowForgot(true); setForgotStatus(null); setForgotEmail(''); }}
+              className="text-center text-[14px] font-medium text-black/42 mt-2 hover:text-black/60 transition-colors cursor-pointer"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
           </div>
         </div>
         </div>
@@ -117,6 +129,68 @@ export const Login = () => {
         {showRegister && (
           <div className="fixed inset-0 z-50">
             <RegisterForm onBackToLogin={() => setShowRegister(false)} />
+          </div>
+        )}
+
+        {/* Forgot Password Modal */}
+        {showForgot && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="w-full max-w-[480px] relative">
+              {/* Outer glass layer for subtle blur */}
+              <div className="absolute inset-0 rounded-[28px] pointer-events-none">
+                <div className="absolute inset-0 bg-white/6 backdrop-blur-md rounded-[28px] border border-white/10"></div>
+              </div>
+
+              {/* Inner content box to improve contrast */}
+              <div className="relative p-6 bg-white/95 rounded-[20px] shadow-lg">
+                <h3 className="text-[20px] font-extrabold text-[#0b1221] mb-2">Recuperar contraseña</h3>
+                <p className="text-[14px] text-[#374151] mb-4">Introduce el correo asociado a tu cuenta y te enviaremos un enlace para restablecer la contraseña.</p>
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setForgotLoading(true);
+                  setForgotStatus(null);
+                  try {
+                    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5500';
+                    const resp = await fetch(`${API_BASE}/api/forgot-password`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email: forgotEmail })
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                      setForgotStatus({ ok: true, msg: data.msg || 'Se envió el enlace si el email está registrado.' });
+                    } else {
+                      setForgotStatus({ ok: false, msg: data.error || data.msg || 'Ocurrió un error' });
+                    }
+                  } catch (err) {
+                    setForgotStatus({ ok: false, msg: 'Error de red' });
+                  } finally {
+                    setForgotLoading(false);
+                  }
+                }} className="flex flex-col gap-4">
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="Correo"
+                    required
+                    className="w-full h-[56px] rounded-[12px] bg-white border border-gray-200 px-4 text-black text-[16px] placeholder-gray-400 outline-none shadow-sm"
+                  />
+
+                  <div className="flex items-center gap-3">
+                    <button type="submit" disabled={forgotLoading} className="flex-1 h-[52px] rounded-[12px] bg-[#0b1221] text-white text-[16px] font-bold hover:opacity-95 transition-colors disabled:opacity-60">
+                      {forgotLoading ? 'Enviando...' : 'Enviar enlace'}
+                    </button>
+                    <button type="button" onClick={() => setShowForgot(false)} className="h-[52px] px-4 rounded-[12px] border border-gray-200 text-[#0b1221] bg-white">Cancelar</button>
+                  </div>
+                </form>
+
+                {forgotStatus && (
+                  <div className={`mt-4 text-sm ${forgotStatus.ok ? 'text-green-600' : 'text-red-600'}`}>{forgotStatus.msg}</div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </main>

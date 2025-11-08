@@ -57,6 +57,8 @@ router.get('/', (req, res) => {
 router.post('/login', authController.login);
 router.post('/logout', authController.logout);
 router.get('/verify', authController.verify);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 router.get('/user', authMiddleware, authController.getUserInfo);
 
 // ========== RUTAS DE USUARIOS ==========
