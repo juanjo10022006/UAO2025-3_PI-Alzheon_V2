@@ -16,18 +16,12 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configurar multer para subir archivos de audio
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(__dirname, '../uploads/'));
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'audio-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
+// Configurar multer para usar memoria (no disco)
+// Los archivos se suben directamente a Cloudflare R2
+const storage = multer.memoryStorage();
 
-const upload = multer({ 
+// Multer para audios
+const uploadAudio = multer({ 
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
     fileFilter: (req, file, cb) => {
@@ -36,6 +30,20 @@ const upload = multer({
             cb(null, true);
         } else {
             cb(new Error('Tipo de archivo no permitido. Solo archivos de audio.'));
+        }
+    }
+});
+
+// Multer para imágenes
+const uploadImage = multer({
+    storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /image\/(jpeg|jpg|png|gif|webp)/;
+        if (allowedTypes.test(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Tipo de archivo no permitido. Solo imágenes.'));
         }
     }
 });
@@ -255,7 +263,7 @@ router.get('/paciente/fotos',
 router.post('/paciente/grabar', 
     authMiddleware, 
     requireRole('paciente'),
-    upload.single('audio'),
+    uploadAudio.single('audio'),
     pacienteController.uploadRecording
 );
 
@@ -310,10 +318,11 @@ router.get('/cuidador/fotos',
     cuidadorController.getPatientPhotos
 );
 
-// Crear nueva foto para el paciente
+// Crear nueva foto para el paciente (con imagen o URL)
 router.post('/cuidador/fotos',
     authMiddleware,
     requireRole('cuidador/familiar'),
+    uploadImage.single('image'), // Opcional: si no hay imagen, acepta URL
     cuidadorController.createPatientPhoto
 );
 
