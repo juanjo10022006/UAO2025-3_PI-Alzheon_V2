@@ -3,6 +3,7 @@ import Grabacion from '../models/grabacion.js';
 import Configuracion from '../models/configuracion.js';
 import Usuario from '../models/usuario.js';
 import bcrypt from 'bcryptjs';
+import { uploadAudioToR2 } from '../services/uploadService.js';
 
 // Obtener fotos del paciente
 export const getPatientPhotos = async (req, res) => {
@@ -34,13 +35,20 @@ export const uploadRecording = async (req, res) => {
         if (!foto) {
             return res.status(404).json({ error: 'Foto no encontrada' });
         }
+
+        // Subir audio a R2
+        const audioUrl = await uploadAudioToR2(
+            req.file.buffer, 
+            req.file.mimetype, 
+            req.file.originalname
+        );
         
         // Crear grabación
         const grabacion = new Grabacion({
             photoId,
             pacienteId,
             fotoUrl: foto.url_contenido,
-            audioUrl: `/uploads/${req.file.filename}`,
+            audioUrl,
             duracion: parseInt(duration),
             nota: note || '',
             fecha: new Date()

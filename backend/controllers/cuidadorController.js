@@ -1,6 +1,7 @@
 import Usuario from '../models/usuario.js';
 import Foto from '../models/foto.js';
 import Grabacion from '../models/grabacion.js';
+import { uploadImageToR2 } from '../services/uploadService.js';
 
 // Obtener paciente asociado al cuidador
 export const getAssociatedPatient = async (req, res) => {
@@ -48,7 +49,6 @@ export const getPatientPhotos = async (req, res) => {
 // Crear nueva foto para el paciente
 export const createPatientPhoto = async (req, res) => {
     try {
-        const { etiqueta, url_contenido, descripcion } = req.body;
         const cuidador = await Usuario.findById(req.usuario._id);
         
         if (!cuidador || cuidador.rol !== 'cuidador/familiar') {
@@ -58,6 +58,23 @@ export const createPatientPhoto = async (req, res) => {
         if (!cuidador.pacienteAsociado) {
             return res.status(404).json({ error: 'No tienes un paciente asociado' });
         }
+
+        let url_contenido;
+
+        // Si se sube un archivo de imagen
+        if (req.file) {
+            // Subir imagen comprimida a R2
+            url_contenido = await uploadImageToR2(req.file.buffer, req.file.originalname);
+        } 
+        // Si se envía una URL externa
+        else if (req.body.url_contenido) {
+            url_contenido = req.body.url_contenido;
+        } 
+        else {
+            return res.status(400).json({ error: 'Debe proporcionar una imagen o una URL' });
+        }
+
+        const { etiqueta, descripcion } = req.body;
 
         const nuevaFoto = new Foto({
             etiqueta,
@@ -74,6 +91,7 @@ export const createPatientPhoto = async (req, res) => {
 
         res.status(201).json(fotoPopulada);
     } catch (error) {
+        console.error('Error al crear foto:', error);
         res.status(400).json({ error: error.message });
     }
 };
@@ -172,7 +190,7 @@ export const getPatientRecordings = async (req, res) => {
             fotoUrl: grabacion.photoId?.url_contenido || '',
             fecha: grabacion.createdAt,
             duracion: grabacion.duracion,
-            audioUrl: `/uploads/${grabacion.audioUrl.split('/').pop()}`,
+            audioUrl: grabacion.audioUrl, // Ya es URL completa de R2
             nota: grabacion.photoId?.etiqueta || ''
         }));
 
