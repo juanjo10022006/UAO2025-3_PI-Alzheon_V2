@@ -1,4 +1,8 @@
+import dotenv from 'dotenv';
 import { Resend } from 'resend';
+
+// Asegurarnos de cargar variables de entorno siempre que se importe el servicio.
+dotenv.config();
 
 // Usar la API key desde variables de entorno. No incluir claves en el código.
 const resendApiKey = process.env.RESEND_API_KEY;
