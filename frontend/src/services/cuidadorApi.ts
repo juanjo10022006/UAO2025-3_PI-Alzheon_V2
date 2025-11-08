@@ -48,8 +48,9 @@ export interface PatientStats {
 
 export interface CreatePhotoPayload {
   etiqueta: string
-  url_contenido: string
+  url_contenido?: string  // Opcional si se sube archivo
   descripcion?: string
+  imageFile?: File  // Nuevo: archivo de imagen
 }
 
 export interface UpdatePhotoPayload {
@@ -69,9 +70,29 @@ export const fetchPatientPhotos = async (): Promise<CuidadorPhoto[]> => {
   return data
 }
 
-// Crear nueva foto
+// Crear nueva foto (con imagen o URL)
 export const createPatientPhoto = async (payload: CreatePhotoPayload): Promise<CuidadorPhoto> => {
-  const { data } = await cuidadorApiClient.post('/api/cuidador/fotos', payload)
+  // Si hay un archivo de imagen, usar FormData
+  if (payload.imageFile) {
+    const formData = new FormData()
+    formData.append('image', payload.imageFile)
+    formData.append('etiqueta', payload.etiqueta)
+    if (payload.descripcion) {
+      formData.append('descripcion', payload.descripcion)
+    }
+
+    const { data } = await cuidadorApiClient.post('/api/cuidador/fotos', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return data
+  }
+  
+  // Si es una URL externa
+  const { data } = await cuidadorApiClient.post('/api/cuidador/fotos', {
+    etiqueta: payload.etiqueta,
+    url_contenido: payload.url_contenido,
+    descripcion: payload.descripcion
+  })
   return data
 }
 
