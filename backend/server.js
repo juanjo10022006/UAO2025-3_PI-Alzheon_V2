@@ -10,22 +10,45 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:8080')
-    .split(',')
-    .map(origin => origin.trim())
-    .filter(Boolean);
+// Configuración de CORS más permisiva para desarrollo
+const allowedOrigins = [
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://localhost:5173', // Vite dev por defecto
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+];
+
+// Agregar orígenes adicionales desde .env si existen
+if (process.env.FRONTEND_ORIGINS) {
+    const customOrigins = process.env.FRONTEND_ORIGINS
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean);
+    allowedOrigins.push(...customOrigins);
+}
 
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin)) {
-            return callback(null, origin);
+        // Permitir solicitudes sin origin (como Postman, aplicaciones móviles, etc.)
+        if (!origin) {
+            return callback(null, true);
         }
+        
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        console.warn(`CORS bloqueó solicitud desde origen no permitido: ${origin}`);
         return callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    optionsSuccessStatus: 200
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Set-Cookie'],
+    optionsSuccessStatus: 200,
+    preflightContinue: false
 }));
 
 app.use(express.json({limit: '50mb'}));

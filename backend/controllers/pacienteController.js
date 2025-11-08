@@ -4,6 +4,7 @@ import Configuracion from '../models/configuracion.js';
 import Usuario from '../models/usuario.js';
 import bcrypt from 'bcryptjs';
 import { uploadAudioToR2 } from '../services/uploadService.js';
+import { transcribeAudio } from '../services/transcriptionService.js';
 
 // Obtener fotos del paciente
 export const getPatientPhotos = async (req, res) => {
@@ -20,14 +21,17 @@ export const getPatientPhotos = async (req, res) => {
     }
 };
 
-// Subir grabación de audio
+// Subir grabación de audio o texto
 export const uploadRecording = async (req, res) => {
     try {
         const pacienteId = req.usuario._id;
-        const { photoId, duration, note } = req.body;
+        const { photoId, duration, note, descripcionTexto } = req.body;
         
-        if (!req.file) {
-            return res.status(400).json({ error: 'No se proporcionó archivo de audio' });
+        // Verificar que al menos haya audio o texto
+        if (!req.file && !descripcionTexto) {
+            return res.status(400).json({ 
+                error: 'Debes proporcionar un archivo de audio o una descripción de texto' 
+            });
         }
         
         // Verificar que la foto pertenece al paciente
@@ -36,12 +40,44 @@ export const uploadRecording = async (req, res) => {
             return res.status(404).json({ error: 'Foto no encontrada' });
         }
 
-        // Subir audio a R2
-        const audioUrl = await uploadAudioToR2(
-            req.file.buffer, 
-            req.file.mimetype, 
-            req.file.originalname
-        );
+        let audioUrl = null;
+        let transcripcion = null;
+        let tipoContenido = 'texto';
+        let duracionFinal = 0;
+
+        // Procesar audio si existe
+        if (req.file) {
+            console.log('🎵 Procesando audio...');
+            console.log('   - Tamaño:', req.file.buffer.length, 'bytes');
+            console.log('   - Tipo MIME:', req.file.mimetype);
+            console.log('   - Nombre original:', req.file.originalname);
+            
+            // Subir audio a R2
+            console.log('☁️ Subiendo audio a R2...');
+            audioUrl = await uploadAudioToR2(
+                req.file.buffer, 
+                req.file.mimetype, 
+                req.file.originalname
+            );
+            console.log('✅ Audio subido a R2:', audioUrl);
+            
+            // Intentar transcribir el audio
+            console.log('🎙️ Iniciando transcripción...');
+            try {
+                transcripcion = await transcribeAudio(req.file.buffer, req.file.originalname);
+                if (transcripcion) {
+                    console.log('✅ Audio transcrito exitosamente:', transcripcion.substring(0, 50) + '...');
+                } else {
+                    console.log('⚠️ No se pudo transcribir el audio (puede ser que no esté configurado OpenAI)');
+                }
+            } catch (error) {
+                console.error('❌ Error al transcribir audio:', error.message);
+                // Continuar sin transcripción
+            }
+            
+            duracionFinal = parseInt(duration) || 0;
+            tipoContenido = descripcionTexto ? 'ambos' : 'audio';
+        }
         
         // Crear grabación
         const grabacion = new Grabacion({
@@ -49,8 +85,11 @@ export const uploadRecording = async (req, res) => {
             pacienteId,
             fotoUrl: foto.url_contenido,
             audioUrl,
-            duracion: parseInt(duration),
+            duracion: duracionFinal,
             nota: note || '',
+            descripcionTexto: descripcionTexto || null,
+            transcripcion: transcripcion || null,
+            tipoContenido,
             fecha: new Date()
         });
         
@@ -67,6 +106,7 @@ export const uploadRecording = async (req, res) => {
         
         res.status(201).json(grabacion);
     } catch (error) {
+        console.error('Error en uploadRecording:', error);
         res.status(500).json({ error: error.message });
     }
 };

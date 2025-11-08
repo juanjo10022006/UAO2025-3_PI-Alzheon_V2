@@ -1,14 +1,21 @@
 import { useMemo, useState } from 'react'
-import { HiArrowLeft, HiArrowRight, HiMicrophone, HiMiniCheckBadge } from 'react-icons/hi2'
+import { HiArrowLeft, HiArrowRight, HiMicrophone, HiMiniCheckBadge, HiPencil } from 'react-icons/hi2'
 import { toast } from 'sonner'
 import { PatientPhoto } from '../../../services/api'
 import { useAudioRecorder } from '../../../hooks/useAudioRecorder'
 
 interface PatientPhotosProps {
   photos: PatientPhoto[]
-  onUploadRecording: (input: { photoId: string, audio: Blob, duration: number }) => Promise<void>
+  onUploadRecording: (input: { 
+    photoId: string, 
+    audio?: Blob, 
+    duration?: number,
+    descripcionTexto?: string 
+  }) => Promise<void>
   loading?: boolean
 }
+
+type RecordingMode = 'audio' | 'texto'
 
 const formatTimer = (seconds: number) => {
   const mins = Math.floor(seconds / 60).toString().padStart(2, '0')
@@ -20,6 +27,8 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [recordingMode, setRecordingMode] = useState<RecordingMode>('audio')
+  const [textoDescripcion, setTextoDescripcion] = useState('')
 
   const {
     audioBlob,
@@ -38,6 +47,8 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
     setSelectedIndex(null)
     reset()
     setStatusMessage(null)
+    setTextoDescripcion('')
+    setRecordingMode('audio')
   }
 
   const photoGrid = useMemo(() => {
@@ -59,6 +70,8 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
               setSelectedIndex(index)
               reset()
               setStatusMessage(null)
+              setTextoDescripcion('')
+              setRecordingMode('audio')
             }}
             className="glass-card overflow-hidden text-left group focus:outline-none"
           >
@@ -81,8 +94,14 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
   }, [loading, photos, reset])
 
   const handleSaveRecording = async () => {
-    if (!audioBlob || !selectedPhoto) {
-      toast.error('Primero debes grabar una descripción')
+    if (!selectedPhoto) {
+      toast.error('No hay foto seleccionada')
+      return
+    }
+
+    // Validar que haya al menos audio o texto
+    if (!audioBlob && !textoDescripcion.trim()) {
+      toast.error('Debes grabar un audio o escribir una descripción')
       return
     }
 
@@ -90,8 +109,9 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
       setIsSaving(true)
       await onUploadRecording({
         photoId: selectedPhoto._id,
-        audio: audioBlob,
-        duration: elapsedTime,
+        audio: audioBlob || undefined,
+        duration: audioBlob ? elapsedTime : undefined,
+        descripcionTexto: textoDescripcion.trim() || undefined,
       })
       setStatusMessage('Descripción guardada exitosamente')
       toast.success('Descripción guardada exitosamente')
@@ -143,6 +163,8 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
                     const newIndex = prev - 1 < 0 ? photos.length - 1 : prev - 1
                     reset()
                     setStatusMessage(null)
+                    setTextoDescripcion('')
+                    setRecordingMode('audio')
                     return newIndex
                   })
                 }}
@@ -163,6 +185,8 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
                     const newIndex = (prev + 1) % photos.length
                     reset()
                     setStatusMessage(null)
+                    setTextoDescripcion('')
+                    setRecordingMode('audio')
                     return newIndex
                   })
                 }}
@@ -178,51 +202,97 @@ export const PatientPhotos = ({ photos, onUploadRecording, loading }: PatientPho
               </div>
 
               <div className="glass-card p-6 flex flex-col gap-4">
-                <p className="text-sm uppercase tracking-[0.4em] text-white/70">Graba tu descripción</p>
-                <div className="flex items-center gap-4">
-                  <div className={`h-14 w-14 rounded-full flex items-center justify-center ${isRecording ? 'bg-red-500 recording-pulse' : 'bg-white/15'}`}>
-                    <HiMicrophone className="text-2xl" />
-                  </div>
-                  <div>
-                    <p className="text-lg font-semibold">{isRecording ? 'Grabando...' : 'Listo para grabar'}</p>
-                    <span className="text-white/70 text-sm">Duración: {formatTimer(elapsedTime)}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm uppercase tracking-[0.4em] text-white/70">
+                    {recordingMode === 'audio' ? 'Graba tu descripción' : 'Escribe tu descripción'}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setRecordingMode('audio')}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        recordingMode === 'audio' 
+                          ? 'bg-[#3B9CFF] text-white' 
+                          : 'bg-white/10 text-white/70 hover:bg-white/20'
+                      }`}
+                    >
+                      <HiMicrophone className="inline mr-1" />
+                      Audio
+                    </button>
+                    <button
+                      onClick={() => setRecordingMode('texto')}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${
+                        recordingMode === 'texto' 
+                          ? 'bg-[#3B9CFF] text-white' 
+                          : 'bg-white/10 text-white/70 hover:bg-white/20'
+                      }`}
+                    >
+                      <HiPencil className="inline mr-1" />
+                      Texto
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {!isRecording && (
-                    <button
-                      onClick={startRecording}
-                      className="flex-1 glass-button rounded-full px-4 py-3 font-semibold"
-                    >
-                      Iniciar grabación
-                    </button>
-                  )}
-                  {isRecording && (
-                    <button
-                      onClick={stopRecording}
-                      className="flex-1 rounded-full px-4 py-3 font-semibold bg-red-500/80 hover:bg-red-500 transition-colors"
-                    >
-                      Detener grabación
-                    </button>
-                  )}
-                  {audioURL && !isRecording && (
-                    <div className="w-full rounded-2xl bg-white/10 px-4 py-3">
-                      <p className="text-sm text-white/70 mb-2">Vista previa</p>
-                      <audio
-                        controls
-                        src={audioURL}
-                        className="w-full"
-                      >
-                        Tu navegador no soporta la reproducción de audio.
-                      </audio>
+                {recordingMode === 'audio' ? (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <div className={`h-14 w-14 rounded-full flex items-center justify-center ${isRecording ? 'bg-red-500 recording-pulse' : 'bg-white/15'}`}>
+                        <HiMicrophone className="text-2xl" />
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold">{isRecording ? 'Grabando...' : 'Listo para grabar'}</p>
+                        <span className="text-white/70 text-sm">Duración: {formatTimer(elapsedTime)}</span>
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      {!isRecording && (
+                        <button
+                          onClick={startRecording}
+                          className="flex-1 glass-button rounded-full px-4 py-3 font-semibold"
+                        >
+                          Iniciar grabación
+                        </button>
+                      )}
+                      {isRecording && (
+                        <button
+                          onClick={stopRecording}
+                          className="flex-1 rounded-full px-4 py-3 font-semibold bg-red-500/80 hover:bg-red-500 transition-colors"
+                        >
+                          Detener grabación
+                        </button>
+                      )}
+                      {audioURL && !isRecording && (
+                        <div className="w-full rounded-2xl bg-white/10 px-4 py-3">
+                          <p className="text-sm text-white/70 mb-2">Vista previa</p>
+                          <audio
+                            controls
+                            src={audioURL}
+                            className="w-full"
+                          >
+                            Tu navegador no soporta la reproducción de audio.
+                          </audio>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    <textarea
+                      value={textoDescripcion}
+                      onChange={(e) => setTextoDescripcion(e.target.value)}
+                      placeholder="Escribe aquí tu descripción de esta fotografía..."
+                      className="w-full min-h-[200px] rounded-2xl bg-white/10 px-4 py-3 text-white placeholder:text-white/40 resize-none focus:outline-none focus:ring-2 focus:ring-[#3B9CFF]"
+                      maxLength={1000}
+                    />
+                    <p className="text-xs text-white/50 text-right">
+                      {textoDescripcion.length} / 1000 caracteres
+                    </p>
+                  </div>
+                )}
 
                 <button
                   onClick={handleSaveRecording}
-                  disabled={!audioBlob || isSaving}
+                  disabled={(!audioBlob && !textoDescripcion.trim()) || isSaving}
                   className="w-full rounded-full bg-[#3B9CFF] px-4 py-3 font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSaving ? 'Guardando...' : 'Guardar descripción'}

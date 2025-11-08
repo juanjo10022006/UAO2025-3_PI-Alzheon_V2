@@ -183,7 +183,7 @@ export const getPatientRecordings = async (req, res) => {
             .populate('photoId', 'etiqueta url_contenido')
             .sort({ createdAt: -1 });
 
-        // Mapear para incluir fotoUrl
+        // Mapear para incluir todos los campos necesarios
         const grabacionesFormateadas = grabaciones.map(grabacion => ({
             _id: grabacion._id,
             photoId: grabacion.photoId?._id,
@@ -191,7 +191,10 @@ export const getPatientRecordings = async (req, res) => {
             fecha: grabacion.createdAt,
             duracion: grabacion.duracion,
             audioUrl: grabacion.audioUrl, // Ya es URL completa de R2
-            nota: grabacion.photoId?.etiqueta || ''
+            nota: grabacion.photoId?.etiqueta || '',
+            descripcionTexto: grabacion.descripcionTexto, // Texto escrito por el paciente
+            transcripcion: grabacion.transcripcion, // Transcripción automática
+            tipoContenido: grabacion.tipoContenido // 'audio', 'texto', 'ambos'
         }));
 
         res.json(grabacionesFormateadas);

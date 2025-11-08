@@ -131,16 +131,23 @@ export const PatientApp = () => {
     })
   }, [recordings])
 
-  const handleUploadRecording = async (payload: { photoId: string, audio: Blob, duration: number }) => {
+  const handleUploadRecording = async (payload: { 
+    photoId: string, 
+    audio?: Blob, 
+    duration?: number,
+    descripcionTexto?: string 
+  }) => {
     try {
       await uploadPatientRecording({
         photoId: payload.photoId,
         audioBlob: payload.audio,
         duration: payload.duration,
+        descripcionTexto: payload.descripcionTexto,
       })
 
       const relatedPhoto = photos.find((photo) => photo._id === payload.photoId)
-      const localAudioUrl = URL.createObjectURL(payload.audio)
+      const localAudioUrl = payload.audio ? URL.createObjectURL(payload.audio) : undefined
+      
       setRecordings((prev) => [
         {
           _id: `temp-${Date.now()}`,
@@ -148,8 +155,10 @@ export const PatientApp = () => {
           photoId: payload.photoId,
           fotoUrl: relatedPhoto?.url_contenido || '/background.jpg',
           fecha: new Date().toISOString(),
-          duracion: payload.duration,
+          duracion: payload.duration || 0,
           nota: relatedPhoto?.etiqueta,
+          descripcionTexto: payload.descripcionTexto,
+          tipoContenido: payload.audio && payload.descripcionTexto ? 'ambos' : payload.audio ? 'audio' : 'texto',
         },
         ...prev,
       ])

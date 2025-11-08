@@ -26,8 +26,11 @@ export interface CuidadorRecording {
   fotoUrl: string
   fecha: string
   duracion: number
-  audioUrl: string
+  audioUrl?: string
   nota?: string
+  descripcionTexto?: string
+  transcripcion?: string
+  tipoContenido?: 'audio' | 'texto' | 'ambos'
 }
 
 export interface PatientInfo {

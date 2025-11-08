@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
-import { HiPlay } from 'react-icons/hi2'
+import { useMemo, useState } from 'react'
+import { HiPlay, HiDocument, HiMicrophone, HiChevronDown, HiChevronUp } from 'react-icons/hi2'
 import { CuidadorRecording } from '../../../services/cuidadorApi'
 
 interface CuidadorProgressProps {
@@ -25,6 +25,8 @@ const formatDate = (date: string) => {
 }
 
 export const CuidadorProgress = ({ recordings, patientName, loading }: CuidadorProgressProps) => {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  
   const orderedRecordings = useMemo(
     () =>
       [...recordings].sort(
@@ -32,6 +34,10 @@ export const CuidadorProgress = ({ recordings, patientName, loading }: CuidadorP
       ),
     [recordings]
   )
+
+  const toggleExpanded = (id: string) => {
+    setExpandedId(expandedId === id ? null : id)
+  }
 
   // Calcular estadísticas
   const stats = useMemo(() => {
@@ -139,24 +145,50 @@ export const CuidadorProgress = ({ recordings, patientName, loading }: CuidadorP
         <div className="glass-panel p-6">
           <h3 className="text-xl font-semibold mb-4">Historial de grabaciones</h3>
           <div className="space-y-4 patient-scroll max-h-[650px] overflow-auto">
-            {orderedRecordings.map((recording) => (
-              <div key={recording._id} className="glass-card p-4 flex flex-col gap-4 md:flex-row md:items-center">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden border border-white/20 shadow-lg flex-shrink-0">
-                    <img src={recording.fotoUrl} alt={recording.nota || 'Foto descrita'} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.4em] text-white/70">Grabado el</p>
-                    <h3 className="text-xl font-semibold">{formatDate(recording.fecha)}</h3>
-                    {recording.nota && <p className="text-white/70 text-sm mt-1">{recording.nota}</p>}
-                  </div>
-                </div>
+            {orderedRecordings.map((recording) => {
+              const isExpanded = expandedId === recording._id
+              const hasAudio = recording.audioUrl && recording.tipoContenido !== 'texto'
+              const hasTexto = recording.descripcionTexto
+              const hasTranscripcion = recording.transcripcion
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1 space-y-2">
-                    <div className="text-sm text-white/70">
-                      Duración <span className="font-semibold text-white">{formatDuration(recording.duracion)}</span>
+              return (
+                <div key={recording._id} className="glass-card p-4 flex flex-col gap-4">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="w-24 h-24 rounded-2xl overflow-hidden border border-white/20 shadow-lg flex-shrink-0">
+                        <img src={recording.fotoUrl} alt={recording.nota || 'Foto descrita'} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm uppercase tracking-[0.4em] text-white/70">Grabado el</p>
+                        <h3 className="text-xl font-semibold">{formatDate(recording.fecha)}</h3>
+                        {recording.nota && <p className="text-white/70 text-sm mt-1 truncate">{recording.nota}</p>}
+                        
+                        <div className="flex gap-2 mt-2">
+                          {hasAudio && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-[#3B9CFF]/20 text-[#3B9CFF] px-2 py-1 rounded-full">
+                              <HiMicrophone />
+                              Audio
+                            </span>
+                          )}
+                          {hasTexto && (
+                            <span className="inline-flex items-center gap-1 text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded-full">
+                              <HiDocument />
+                              Texto
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
+
+                    {hasAudio && recording.duracion > 0 && (
+                      <div className="text-sm text-white/70">
+                        Duración <span className="font-semibold text-white">{formatDuration(recording.duracion)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Audio Player */}
+                  {hasAudio && (
                     <div className="rounded-2xl bg-white/10 px-4 py-3">
                       <div className="flex items-center gap-2 text-sm font-semibold text-white mb-2">
                         <HiPlay className="text-lg text-[#3B9CFF]" />
@@ -170,10 +202,64 @@ export const CuidadorProgress = ({ recordings, patientName, loading }: CuidadorP
                         Tu navegador no soporta la reproducción de audio.
                       </audio>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Descripción de texto */}
+                  {hasTexto && (
+                    <div className="rounded-2xl bg-purple-500/10 border border-purple-500/20 px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-purple-300">
+                          <HiDocument className="text-lg" />
+                          Descripción escrita por el paciente
+                        </div>
+                        {recording.descripcionTexto && recording.descripcionTexto.length > 150 && (
+                          <button
+                            onClick={() => toggleExpanded(recording._id)}
+                            className="text-xs text-white/70 hover:text-white flex items-center gap-1"
+                          >
+                            {isExpanded ? (
+                              <>Mostrar menos <HiChevronUp /></>
+                            ) : (
+                              <>Mostrar más <HiChevronDown /></>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <p className={`text-white/90 text-sm whitespace-pre-wrap ${!isExpanded && recording.descripcionTexto && recording.descripcionTexto.length > 150 ? 'line-clamp-3' : ''}`}>
+                        {recording.descripcionTexto}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Transcripción */}
+                  {hasTranscripcion && (
+                    <div className="rounded-2xl bg-blue-500/10 border border-blue-500/20 px-4 py-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-blue-300">
+                          <HiDocument className="text-lg" />
+                          Transcripción automática del audio
+                        </div>
+                        {recording.transcripcion && recording.transcripcion.length > 150 && (
+                          <button
+                            onClick={() => toggleExpanded(recording._id)}
+                            className="text-xs text-white/70 hover:text-white flex items-center gap-1"
+                          >
+                            {isExpanded ? (
+                              <>Mostrar menos <HiChevronUp /></>
+                            ) : (
+                              <>Mostrar más <HiChevronDown /></>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                      <p className={`text-white/80 text-sm italic whitespace-pre-wrap ${!isExpanded && recording.transcripcion && recording.transcripcion.length > 150 ? 'line-clamp-3' : ''}`}>
+                        {recording.transcripcion}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}

@@ -17,14 +17,27 @@ const grabacionSchema = new mongoose.Schema({
     },
     audioUrl: {
         type: String,
-        required: true
+        required: false // Ya no es obligatorio, puede ser texto o audio
     },
     duracion: {
         type: Number,
-        required: true // En segundos
+        required: false // En segundos, solo si hay audio
     },
     nota: {
         type: String
+    },
+    descripcionTexto: {
+        type: String,
+        required: false // Descripción escrita por el paciente (alternativa al audio)
+    },
+    transcripcion: {
+        type: String,
+        required: false // Transcripción automática del audio
+    },
+    tipoContenido: {
+        type: String,
+        enum: ['audio', 'texto', 'ambos'],
+        default: 'audio'
     },
     fecha: {
         type: Date,

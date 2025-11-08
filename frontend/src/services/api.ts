@@ -13,8 +13,11 @@ export interface PatientRecording {
   fotoUrl: string
   fecha: string
   duracion: number
-  audioUrl: string
+  audioUrl?: string
   nota?: string
+  descripcionTexto?: string
+  transcripcion?: string
+  tipoContenido?: 'audio' | 'texto' | 'ambos'
 }
 
 export type ReminderFrequency = 'diario' | 'cada_2_dias' | 'semanal'
@@ -35,9 +38,10 @@ export interface PatientProfile {
 
 export interface UploadRecordingPayload {
   photoId: string
-  audioBlob: Blob
-  duration: number
+  audioBlob?: Blob
+  duration?: number
   note?: string
+  descripcionTexto?: string
 }
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
@@ -55,8 +59,18 @@ export const fetchPatientPhotos = async (): Promise<PatientPhoto[]> => {
 export const uploadPatientRecording = async (payload: UploadRecordingPayload): Promise<void> => {
   const formData = new FormData()
   formData.append('photoId', payload.photoId)
-  formData.append('audio', payload.audioBlob)
-  formData.append('duration', payload.duration.toString())
+  
+  if (payload.audioBlob) {
+    formData.append('audio', payload.audioBlob)
+    if (payload.duration) {
+      formData.append('duration', payload.duration.toString())
+    }
+  }
+  
+  if (payload.descripcionTexto) {
+    formData.append('descripcionTexto', payload.descripcionTexto)
+  }
+  
   if (payload.note) {
     formData.append('note', payload.note)
   }
