@@ -99,7 +99,7 @@ export const CuidadorApp = () => {
     }
   }, [status, user.rol])
 
-  const handleCreatePhoto = async (data: { etiqueta: string; url_contenido: string; descripcion?: string }) => {
+  const handleCreatePhoto = async (data: { etiqueta: string; url_contenido?: string; descripcion?: string; imageFile?: File }) => {
     const newPhoto = await createPatientPhoto(data)
     setPhotos((prev) => [newPhoto, ...prev])
     setStats((prev) => ({ ...prev, totalFotos: prev.totalFotos + 1 }))

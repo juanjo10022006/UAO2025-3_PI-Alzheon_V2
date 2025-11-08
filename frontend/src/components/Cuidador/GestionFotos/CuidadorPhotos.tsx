@@ -6,7 +6,7 @@ import { CuidadorPhoto } from '../../../services/cuidadorApi'
 interface CuidadorPhotosProps {
   photos: CuidadorPhoto[]
   patientName: string
-  onCreatePhoto: (data: { etiqueta: string; url_contenido: string; descripcion?: string }) => Promise<void>
+  onCreatePhoto: (data: { etiqueta: string; url_contenido?: string; descripcion?: string; imageFile?: File }) => Promise<void>
   onUpdatePhoto: (photoId: string, data: { etiqueta?: string; descripcion?: string }) => Promise<void>
   onDeletePhoto: (photoId: string) => Promise<void>
   loading?: boolean
@@ -163,7 +163,7 @@ export const CuidadorPhotos = ({
 
 interface CreatePhotoModalProps {
   onClose: () => void
-  onCreate: (data: { etiqueta: string; url_contenido: string; descripcion?: string }) => Promise<void>
+  onCreate: (data: { etiqueta: string; url_contenido?: string; descripcion?: string; imageFile?: File }) => Promise<void>
 }
 
 const CreatePhotoModal = ({ onClose, onCreate }: CreatePhotoModalProps) => {
@@ -171,17 +171,72 @@ const CreatePhotoModal = ({ onClose, onCreate }: CreatePhotoModalProps) => {
   const [url, setUrl] = useState('')
   const [descripcion, setDescripcion] = useState('')
   const [loading, setLoading] = useState(false)
+  const [uploadMode, setUploadMode] = useState<'url' | 'file'>('file') // Por defecto: subir archivo
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string>('')
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validar tipo de archivo
+      if (!file.type.startsWith('image/')) {
+        toast.error('Por favor selecciona una imagen válida')
+        return
+      }
+
+      // Validar tamaño (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('La imagen no debe superar los 10MB')
+        return
+      }
+
+      setSelectedFile(file)
+      
+      // Crear preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!etiqueta.trim() || !url.trim()) {
-      toast.error('Por favor completa los campos requeridos')
+    
+    if (!etiqueta.trim()) {
+      toast.error('Por favor ingresa un título')
+      return
+    }
+
+    if (uploadMode === 'url' && !url.trim()) {
+      toast.error('Por favor ingresa una URL')
+      return
+    }
+
+    if (uploadMode === 'file' && !selectedFile) {
+      toast.error('Por favor selecciona una imagen')
       return
     }
 
     setLoading(true)
-    await onCreate({ etiqueta, url_contenido: url, descripcion: descripcion || undefined })
-    setLoading(false)
+    try {
+      if (uploadMode === 'file' && selectedFile) {
+        await onCreate({ 
+          etiqueta, 
+          descripcion: descripcion || undefined,
+          imageFile: selectedFile 
+        })
+      } else {
+        await onCreate({ 
+          etiqueta, 
+          url_contenido: url, 
+          descripcion: descripcion || undefined 
+        })
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -199,6 +254,32 @@ const CreatePhotoModal = ({ onClose, onCreate }: CreatePhotoModalProps) => {
 
         <h3 className="text-2xl font-semibold mb-6">Agregar Nueva Foto</h3>
 
+        {/* Selector de modo */}
+        <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-full">
+          <button
+            type="button"
+            onClick={() => setUploadMode('file')}
+            className={`flex-1 py-2 px-4 rounded-full font-medium transition-all ${
+              uploadMode === 'file' 
+                ? 'bg-white/20 text-white' 
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            📤 Subir Imagen
+          </button>
+          <button
+            type="button"
+            onClick={() => setUploadMode('url')}
+            className={`flex-1 py-2 px-4 rounded-full font-medium transition-all ${
+              uploadMode === 'url' 
+                ? 'bg-white/20 text-white' 
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            🔗 Usar URL
+          </button>
+        </div>
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">
@@ -214,19 +295,58 @@ const CreatePhotoModal = ({ onClose, onCreate }: CreatePhotoModalProps) => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-white/70 mb-2">
-              URL de la imagen *
-            </label>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://ejemplo.com/imagen.jpg"
-              className="w-full rounded-2xl bg-white/10 px-4 py-3 border border-white/20 text-white placeholder-white/40"
-              required
-            />
-          </div>
+          {uploadMode === 'file' ? (
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">
+                Seleccionar imagen *
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className="flex items-center justify-center w-full h-32 rounded-2xl bg-white/10 border-2 border-dashed border-white/30 cursor-pointer hover:bg-white/15 transition-colors"
+                >
+                  {selectedFile ? (
+                    <div className="text-center">
+                      <p className="text-white font-medium">{selectedFile.name}</p>
+                      <p className="text-white/60 text-sm mt-1">
+                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-white/70 text-lg mb-1">📁</p>
+                      <p className="text-white/70">Click para seleccionar una imagen</p>
+                      <p className="text-white/50 text-sm mt-1">PNG, JPG, WebP (Max 10MB)</p>
+                    </div>
+                  )}
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-white/70 mb-2">
+                URL de la imagen *
+              </label>
+              <input
+                type="url"
+                value={url}
+                onChange={(e) => {
+                  setUrl(e.target.value)
+                  setPreviewUrl(e.target.value)
+                }}
+                placeholder="https://ejemplo.com/imagen.jpg"
+                className="w-full rounded-2xl bg-white/10 px-4 py-3 border border-white/20 text-white placeholder-white/40"
+                required={uploadMode === 'url'}
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">
@@ -241,11 +361,17 @@ const CreatePhotoModal = ({ onClose, onCreate }: CreatePhotoModalProps) => {
             />
           </div>
 
-          {url && (
+          {previewUrl && (
             <div className="rounded-2xl overflow-hidden border border-white/20">
-              <img src={url} alt="Vista previa" className="w-full h-48 object-cover" onError={(e) => {
-                e.currentTarget.style.display = 'none'
-              }} />
+              <p className="text-sm text-white/70 px-4 py-2 bg-white/5">Vista previa:</p>
+              <img 
+                src={previewUrl} 
+                alt="Vista previa" 
+                className="w-full h-48 object-cover" 
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }} 
+              />
             </div>
           )}
         </div>
@@ -254,7 +380,8 @@ const CreatePhotoModal = ({ onClose, onCreate }: CreatePhotoModalProps) => {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 glass-button rounded-full py-3 font-semibold"
+            disabled={loading}
+            className="flex-1 glass-button rounded-full py-3 font-semibold disabled:opacity-50"
           >
             Cancelar
           </button>
