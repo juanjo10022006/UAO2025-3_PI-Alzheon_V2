@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import router from './routes/router.js';
 import connectDB from './config/db.js';
+import { startReminderWorker } from './jobs/reminderJob.js';
 
 dotenv.config();
 
@@ -38,6 +39,8 @@ app.use('/api', router);
 
 connectDB();
 
+// Iniciar worker de recordatorios (consulta periódica)
+startReminderWorker();
 
 const PORT = process.env.PORT || 5500;
 app.listen(PORT,  () => {
