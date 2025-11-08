@@ -35,7 +35,7 @@ export const RegisterForm: React.FC<props> = ({onBackToLogin}) => {
       await dispatch(startRegister({...inputs}))
       handleReset()
       setLoading(false)
-      navigate('/')
+      navigate('/app')
     } catch (error) {
       setLoading(false)
       onBackToLogin()

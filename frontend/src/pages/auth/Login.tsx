@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { AppDispatch } from '../../store/store';
 import { startLogin } from '../../store/thunks/authThunk';
 import { RegisterForm } from '../../components/auth/RegisterForm';
+import { Navbar } from '../../components/generics/Navbar';
+import { Footer } from '../../components/generics/Footer';
 
 export const Login = () => {
   const [correo, setCorreo] = useState("");
@@ -19,7 +21,7 @@ export const Login = () => {
     try {
       const result = await dispatch(startLogin({ email: correo, password: contrasena }));
       if (result) {
-        navigate('/');
+        navigate('/app');
       }
     } catch (error) {
       console.error('Error en login:', error);
@@ -29,24 +31,27 @@ export const Login = () => {
   const backgroundImage = "/background.jpg";
 
   return (
-    <div className="min-h-screen relative bg-[#13172b]">
-      {/* Background Image */}
-      <div className="absolute inset-0 w-full h-full">
-        <img 
-          src={backgroundImage} 
-          alt="Mountain landscape" 
-          className="w-full h-full object-cover"
-        />
-      </div>
-      
-      {/* Login Container */}
-      <div className="relative flex items-center justify-center min-h-screen">
-        <div className="w-[450px] h-[480px] relative">
-          {/* Glassmorphism Background */}
-          <div className="absolute inset-0 rounded-[34px]">
-            <div className="absolute inset-0 bg-white/10 backdrop-blur-2xl rounded-[34px] border border-white/20"></div>
-            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-white/5 rounded-[34px]"></div>
-          </div>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+
+      <main className="flex-1 relative bg-[#13172b]">
+        {/* Background Image */}
+        <div className="absolute inset-0 w-full h-full">
+          <img 
+            src={backgroundImage} 
+            alt="Mountain landscape" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+        
+        {/* Login Container */}
+        <div className="relative flex items-center justify-center min-h-screen">
+          <div className="w-[450px] h-[480px] relative">
+            {/* Glassmorphism Background */}
+            <div className="absolute inset-0 rounded-[34px]">
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-2xl rounded-[34px] border border-white/20"></div>
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-white/5 rounded-[34px]"></div>
+            </div>
           
           {/* Content */}
           <div className="relative flex flex-col items-center pt-[40px] px-[60px] pb-[40px] h-full">
@@ -106,14 +111,17 @@ export const Login = () => {
             </button>
           </div>
         </div>
-      </div>
-      
-      {/* Register Form Modal */}
-      {showRegister && (
-        <div className="fixed inset-0 z-50">
-          <RegisterForm onBackToLogin={() => setShowRegister(false)} />
         </div>
-      )}
+        
+        {/* Register Form Modal */}
+        {showRegister && (
+          <div className="fixed inset-0 z-50">
+            <RegisterForm onBackToLogin={() => setShowRegister(false)} />
+          </div>
+        )}
+      </main>
+
+      <Footer />
     </div>
   );
 };
