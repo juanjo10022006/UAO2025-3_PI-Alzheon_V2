@@ -8,6 +8,7 @@ import Usuario from '../models/usuario.js';
 import * as authController from '../controllers/authController.js';
 import * as pacienteController from '../controllers/pacienteController.js';
 import * as cuidadorController from '../controllers/cuidadorController.js';
+import * as medicoController from '../controllers/medicoController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -354,6 +355,85 @@ router.get('/cuidador/estadisticas',
     authMiddleware,
     requireRole('cuidador/familiar'),
     cuidadorController.getPatientStats
+);
+
+// ========== RUTAS DEL MÉDICO ==========
+
+// Obtener estadísticas generales del médico
+router.get('/medico/estadisticas',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getDoctorStats
+);
+
+// Obtener todos los pacientes asignados al médico
+router.get('/medico/pacientes',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getAssignedPatients
+);
+
+// Obtener todos los pacientes disponibles para asignar
+router.get('/medico/pacientes/disponibles',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getAllPatients
+);
+
+// Obtener detalles de un paciente específico
+router.get('/medico/pacientes/:pacienteId',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getPatientDetails
+);
+
+// Obtener fotos de un paciente
+router.get('/medico/pacientes/:pacienteId/fotos',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getPatientPhotos
+);
+
+// Obtener grabaciones de un paciente
+router.get('/medico/pacientes/:pacienteId/grabaciones',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getPatientRecordings
+);
+
+// Asignar paciente al médico
+router.post('/medico/pacientes',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.assignPatient
+);
+
+// Desasignar paciente del médico
+router.delete('/medico/pacientes/:pacienteId',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.unassignPatient
+);
+
+// Actualizar información de un paciente
+router.put('/medico/pacientes/:pacienteId',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.updatePatientInfo
+);
+
+// Obtener todos los cuidadores disponibles
+router.get('/medico/cuidadores',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getAvailableCaregivers
+);
+
+// Asignar cuidador a paciente
+router.post('/medico/asignar-cuidador',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.assignCaregiverToPatient
 );
 
 export default router;
