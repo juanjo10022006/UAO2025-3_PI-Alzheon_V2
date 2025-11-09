@@ -4,8 +4,10 @@ import ResetPassword from './pages/auth/ResetPassword'
 import { RegisterPage } from './pages/auth/RegisterPage'
 import { PatientRoute } from './pages/auth/PatientRoute'
 import { CuidadorRoute } from './pages/auth/CuidadorRoute'
+import { MedicoRoute } from './pages/auth/MedicoRoute'
 import { PatientApp } from './pages/paciente/PatientApp'
 import { CuidadorApp } from './pages/cuidador/CuidadorApp'
+import { MedicoApp } from './pages/medico/MedicoApp'
 import { RootRedirect } from './pages/RootRedirect'
 import { LandingPage } from './pages/LandingPage'
 
@@ -24,6 +26,10 @@ export const Alzheon = () => {
 
       <Route element={<CuidadorRoute />}>
         <Route path="/cuidador/*" element={<CuidadorApp />} />
+      </Route>
+
+      <Route element={<MedicoRoute />}>
+        <Route path="/medico/*" element={<MedicoApp />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
