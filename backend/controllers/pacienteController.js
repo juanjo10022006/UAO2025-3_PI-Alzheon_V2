@@ -2,9 +2,12 @@ import Foto from '../models/foto.js';
 import Grabacion from '../models/grabacion.js';
 import Configuracion from '../models/configuracion.js';
 import Usuario from '../models/usuario.js';
+import AnalisisCognitivo from '../models/analisisCognitivo.js';
+import AlertaCognitiva from '../models/alertaCognitiva.js';
 import bcrypt from 'bcryptjs';
 import { uploadAudioToR2 } from '../services/uploadService.js';
 import { transcribeAudio } from '../services/transcriptionService.js';
+import { analizarTexto, detectarDesviaciones } from '../services/nlpAnalysisService.js';
 
 // Obtener fotos del paciente
 export const getPatientPhotos = async (req, res) => {
@@ -103,6 +106,99 @@ export const uploadRecording = async (req, res) => {
                 $set: { 'estadisticas.ultimaGrabacion': new Date() }
             }
         );
+
+        // ========== ANÁLISIS COGNITIVO AUTOMÁTICO (HU-03) ==========
+        // Analizar el texto si existe transcripción o descripción
+        const textoParaAnalizar = transcripcion || descripcionTexto;
+        
+        if (textoParaAnalizar && textoParaAnalizar.trim().length > 20) {
+            console.log('🧠 Iniciando análisis cognitivo del texto...');
+            
+            try {
+                // Realizar análisis con Vertex AI
+                const resultadoAnalisis = await analizarTexto(textoParaAnalizar);
+                
+                // Verificar si es la primera grabación (establecer como línea base)
+                const totalAnalisis = await AnalisisCognitivo.countDocuments({ pacienteId });
+                const esLineaBase = totalAnalisis < 3; // Primeros 3 análisis forman la línea base
+                
+                // Crear registro de análisis cognitivo
+                const analisis = new AnalisisCognitivo({
+                    pacienteId,
+                    grabacionId: grabacion._id,
+                    esLineaBase,
+                    ...resultadoAnalisis
+                });
+                
+                await analisis.save();
+                console.log(`✅ Análisis cognitivo guardado (línea base: ${esLineaBase})`);
+                
+                // Si no es línea base, detectar desviaciones
+                if (!esLineaBase) {
+                    const lineaBase = await AnalisisCognitivo.obtenerLineaBase(pacienteId);
+                    
+                    if (lineaBase) {
+                        // Obtener umbral de la configuración del médico (por defecto 15%)
+                        const config = await Configuracion.findOne({ usuarioId: pacienteId });
+                        const umbralDesviacion = config?.umbralDesviacion || 0.15;
+                        
+                        const desviaciones = detectarDesviaciones(analisis, lineaBase, umbralDesviacion);
+                        
+                        if (desviaciones.length > 0) {
+                            console.log(`⚠️ Se detectaron ${desviaciones.length} desviaciones cognitivas`);
+                            
+                            // Determinar severidad según las desviaciones
+                            const maxDesviacion = Math.max(...desviaciones.map(d => Math.abs(d.porcentaje || 0)));
+                            let severidad = 'baja';
+                            let tipo = 'desviacion_moderada';
+                            
+                            if (maxDesviacion >= 50) {
+                                severidad = 'critica';
+                                tipo = 'desviacion_severa';
+                            } else if (maxDesviacion >= 35) {
+                                severidad = 'alta';
+                                tipo = 'desviacion_severa';
+                            } else if (maxDesviacion >= 25) {
+                                severidad = 'media';
+                                tipo = 'desviacion_moderada';
+                            }
+                            
+                            // Obtener médicos asignados al paciente
+                            const paciente = await Usuario.findById(pacienteId).populate('medicosAsignados');
+                            
+                            if (paciente && paciente.medicosAsignados && paciente.medicosAsignados.length > 0) {
+                                // Crear alerta para cada médico asignado
+                                for (const medico of paciente.medicosAsignados) {
+                                    const metricas = desviaciones.map(d => d.metrica).join(', ');
+                                    
+                                    const alerta = new AlertaCognitiva({
+                                        pacienteId,
+                                        medicoId: medico._id,
+                                        analisisId: analisis._id, // ✅ CORREGIDO: era analisisCognitivo._id
+                                        tipo,
+                                        severidad,
+                                        titulo: `Desviación cognitiva detectada - ${paciente.nombre}`,
+                                        descripcion: `Se detectaron ${desviaciones.length} desviaciones cognitivas respecto a la línea base en: ${metricas}. Desviación máxima: ${maxDesviacion.toFixed(1)}%.`,
+                                        desviaciones,
+                                        recomendaciones: []
+                                    });
+                                    
+                                    await alerta.save();
+                                    console.log(`🚨 Alerta ${severidad} creada para médico ${medico.nombre}`);
+                                }
+                            } else {
+                                console.log('⚠️ Paciente no tiene médicos asignados, no se crearon alertas');
+                            }
+                        } else {
+                            console.log('✅ No se detectaron desviaciones significativas');
+                        }
+                    }
+                }
+            } catch (error) {
+                // No bloquear la respuesta si falla el análisis
+                console.error('❌ Error en análisis cognitivo:', error.message);
+            }
+        }
         
         res.status(201).json(grabacion);
     } catch (error) {

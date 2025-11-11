@@ -211,9 +211,16 @@ router.post('/usuarios/:medicoId/pacientes/:pacienteId', authMiddleware, async (
             return res.status(404).json({ error: 'Paciente no encontrado' });
         }
         
+        // Actualizar relación bidireccional
         if (!medico.pacientesAsignados.includes(paciente._id)) {
             medico.pacientesAsignados.push(paciente._id);
             await medico.save();
+        }
+
+        // Actualizar relación inversa en el paciente
+        if (!paciente.medicosAsignados.includes(medico._id)) {
+            paciente.medicosAsignados.push(medico._id);
+            await paciente.save();
         }
         
         res.json({ message: 'Paciente asignado correctamente', medico });
@@ -350,6 +357,13 @@ router.get('/cuidador/grabaciones',
     cuidadorController.getPatientRecordings
 );
 
+// Obtener grabaciones con análisis cognitivo (para línea de tiempo)
+router.get('/cuidador/grabaciones-con-analisis',
+    authMiddleware,
+    requireRole('cuidador/familiar'),
+    cuidadorController.getRecordingsWithAnalysis
+);
+
 // Obtener estadísticas del paciente
 router.get('/cuidador/estadisticas',
     authMiddleware,
@@ -434,6 +448,64 @@ router.post('/medico/asignar-cuidador',
     authMiddleware,
     requireRole('medico'),
     medicoController.assignCaregiverToPatient
+);
+
+// ========== RUTAS DE ANÁLISIS COGNITIVO (HU-03 y HU-04) ==========
+
+// Obtener línea base cognitiva de un paciente
+router.get('/medico/pacientes/:pacienteId/linea-base',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getLineaBase
+);
+
+// Obtener historial de análisis cognitivos
+router.get('/medico/pacientes/:pacienteId/analisis',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getAnalisisCognitivo
+);
+
+// Obtener alertas cognitivas no leídas
+router.get('/medico/alertas',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getAlertas
+);
+
+// Obtener historial de alertas con filtros
+router.get('/medico/alertas/historial',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.getHistorialAlertas
+);
+
+// Marcar alerta como leída
+router.post('/medico/alertas/:alertaId/leer',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.marcarAlertaLeida
+);
+
+// Registrar acción sobre una alerta
+router.post('/medico/alertas/:alertaId/accion',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.registrarAccionAlerta
+);
+
+// Actualizar umbrales de configuración
+router.put('/medico/configuracion/umbrales',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.actualizarUmbrales
+);
+
+// Generar reporte completo de un paciente
+router.get('/medico/pacientes/:pacienteId/reporte',
+    authMiddleware,
+    requireRole('medico'),
+    medicoController.generarReporte
 );
 
 export default router;

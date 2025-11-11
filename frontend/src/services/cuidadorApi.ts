@@ -33,6 +33,36 @@ export interface CuidadorRecording {
   tipoContenido?: 'audio' | 'texto' | 'ambos'
 }
 
+export interface AnalisisCognitivo {
+  _id: string
+  coherencia: number
+  claridad: number
+  riquezaLexica: number
+  memoria: number
+  emocion: number
+  orientacion: number
+  razonamiento: number
+  atencion: number
+  puntuacionGlobal: number
+  observaciones: string
+  alertas: string[]
+  createdAt: string
+}
+
+export interface GrabacionConAnalisis {
+  _id: string
+  photoId: string
+  fotoUrl: string
+  fecha: string
+  duracion: number
+  audioUrl?: string
+  nota?: string
+  descripcionTexto?: string
+  transcripcion?: string
+  tipoContenido?: 'audio' | 'texto' | 'ambos'
+  analisisCognitivo?: AnalisisCognitivo
+}
+
 export interface PatientInfo {
   _id: string
   nombre: string
@@ -113,6 +143,12 @@ export const deletePatientPhoto = async (photoId: string): Promise<void> => {
 // Obtener grabaciones del paciente
 export const fetchPatientRecordings = async (): Promise<CuidadorRecording[]> => {
   const { data } = await cuidadorApiClient.get('/api/cuidador/grabaciones')
+  return data
+}
+
+// Obtener grabaciones con análisis cognitivo (para línea de tiempo)
+export const fetchGrabaciones = async (): Promise<GrabacionConAnalisis[]> => {
+  const { data } = await cuidadorApiClient.get('/api/cuidador/grabaciones-con-analisis')
   return data
 }
 
