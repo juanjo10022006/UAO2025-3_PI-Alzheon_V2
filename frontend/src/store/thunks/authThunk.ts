@@ -50,7 +50,7 @@ export const startLogin = (form: Record<string, unknown>) => {
 // verify if a cookie is active to stay in session
 export const checkAuthStatus = () => {
   return async (dispatch: AppDispatch) => {
-    dispatch(checkingCredentials())
+    // Ya viene con status 'checking' del estado inicial
     try {
       const userData = await fetchVerifyCookie()
 
