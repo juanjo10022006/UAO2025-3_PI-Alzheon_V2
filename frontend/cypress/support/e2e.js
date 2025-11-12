@@ -15,3 +15,27 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+
+// Import cypress-file-upload
+import 'cypress-file-upload'
+
+// Configuración global
+Cypress.on('uncaught:exception', (err, runnable) => {
+  // Ignorar errores de React en desarrollo
+  if (err.message.includes('ResizeObserver') || err.message.includes('chunk')) {
+    return false
+  }
+  return true
+})
+
+// Configuración de timeouts
+Cypress.config('defaultCommandTimeout', 10000)
+Cypress.config('requestTimeout', 10000)
+Cypress.config('responseTimeout', 10000)
+
+// Limpiar antes de cada test
+beforeEach(() => {
+  // Limpiar localStorage y cookies antes de cada test
+  cy.clearLocalStorage()
+  cy.clearCookies()
+})

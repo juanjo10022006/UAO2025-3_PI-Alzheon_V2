@@ -7,7 +7,17 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run",
+    "test:e2e:headed": "cypress run --headed",
+    "test:auth": "cypress run --spec 'cypress/e2e/auth/**/*.cy.js'",
+    "test:paciente": "cypress run --spec 'cypress/e2e/paciente/**/*.cy.js'",
+    "test:cuidador": "cypress run --spec 'cypress/e2e/cuidador/**/*.cy.js'",
+    "test:medico": "cypress run --spec 'cypress/e2e/medico/**/*.cy.js'",
+    "test:integration": "cypress run --spec 'cypress/e2e/integration/**/*.cy.js'",
+    "test:critical": "cypress run --spec 'cypress/e2e/cuidador/upload-photo.cy.js,cypress/e2e/integration/main-flow.cy.js'"
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^1.16.8",
@@ -42,6 +52,7 @@
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "cypress": "^14.4.0",
+    "cypress-file-upload": "^5.0.8",
     "eslint": "^9.22.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
