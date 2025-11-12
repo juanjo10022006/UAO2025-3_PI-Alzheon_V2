@@ -23,27 +23,33 @@ npm install
 Crear archivo `.env` en la carpeta `backend`:
 
 ```env
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/alzheon
+MONGO_URI=tu_cadena_de_conexión
 
-# JWT
-JWT_SECRET=tu_secreto_jwt_muy_seguro
-
-# Cloudflare R2
-R2_ACCOUNT_ID=tu_account_id
-R2_ACCESS_KEY_ID=tu_access_key
-R2_SECRET_ACCESS_KEY=tu_secret_key
-R2_BUCKET_NAME=nombre_del_bucket
-R2_PUBLIC_URL=https://tu-bucket.r2.dev
-
-# OpenAI
-OPENAI_API_KEY=tu_api_key_de_openai
-
-# Resend (para emails)
-RESEND_API_KEY=tu_api_key_de_resend
-
-# Server
 PORT=5500
+
+JWT_SECRET=tu_clave_secreta
+
+NODE_ENV=development
+
+# Resend API Key 
+RESEND_API_KEY=tu_api
+
+R2_ACCOUNT_ID=tu_account_id
+R2_ACCESS_KEY_ID=tu_api
+R2_SECRET_ACCESS_KEY=tu_api
+R2_BUCKET_NAME=alzheon
+R2_PUBLIC_URL=tu_public_url
+R2_ENDPOINT=tu_endpoint
+
+ASSEMBLYAI_API_KEY=tu_api
+
+GEMINI_API_KEY=tu_api
+
+# Configuración de Análisis
+UMBRAL_DESVIACION_DEFECTO=
+MIN_PALABRAS_ANALISIS=
+
+REPORT_ENCRYPTION_KEY=Hash_de_32_caracteres
 ```
 
 Iniciar el servidor:
