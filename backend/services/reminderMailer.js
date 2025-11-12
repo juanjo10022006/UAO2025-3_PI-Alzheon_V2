@@ -1,16 +1,27 @@
 import dotenv from 'dotenv';
-import { Resend } from 'resend';
-
 // Asegurarnos de cargar variables de entorno siempre que se importe el servicio.
 dotenv.config();
 
-// Usar la API key desde variables de entorno. No incluir claves en el código.
-const resendApiKey = process.env.RESEND_API_KEY;
-if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY no definida. Añádela en backend/.env o en las variables de entorno.');
-}
+let resend = null;
+let isTestMode = process.env.NODE_ENV === 'test';
 
-const resend = new Resend(resendApiKey);
+if (!isTestMode) {
+    // Sólo inicializar la librería Resend en entornos distintos a test
+    try {
+        const { Resend } = await import('resend');
+        const resendApiKey = process.env.RESEND_API_KEY;
+        if (!resendApiKey) {
+            throw new Error('RESEND_API_KEY no definida. Añádela en backend/.env o en las variables de entorno.');
+        }
+        resend = new Resend(resendApiKey);
+    } catch (err) {
+        // Re-lanzar para entornos que no sean test
+        throw err;
+    }
+} else {
+    // Modo test: guardaremos los emails enviados en memoria para inspección
+    global.__SENT_EMAILS = global.__SENT_EMAILS || [];
+}
 
 /**
  * Envía un correo de recordatorio usando Resend.
@@ -19,6 +30,14 @@ const resend = new Resend(resendApiKey);
  * @param {string} htmlBody
  */
 export const sendReminderEmail = async (toEmail, subject, htmlBody) => {
+    if (isTestMode) {
+        // Almacenar en memoria para que las pruebas puedan inspeccionarlo
+        const record = { to: toEmail, subject, html: htmlBody, id: `test-${Date.now()}` };
+        global.__SENT_EMAILS.push(record);
+        console.log(`(test) Email simulado a ${toEmail}: ${record.id}`);
+        return record;
+    }
+
     try {
         const data = await resend.emails.send({
             from: 'Alzheon <onboarding@resend.dev>',

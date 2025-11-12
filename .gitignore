@@ -17,6 +17,12 @@ README.md
 API_TESTING.md
 IMPLEMENTATION_SUMMARY.md
 
+# Google Cloud Credentials
+**/alzheon-credentials.json
+**/*-credentials.json
+backend/config/*.json
+!backend/config/*.example.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

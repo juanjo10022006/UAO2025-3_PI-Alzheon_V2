@@ -34,8 +34,12 @@ const usuarioSchema = new mongoose.Schema({
     pacientesAsignados: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Usuario'
-    }]
-    ,
+    }],
+    // Relación inversa para pacientes (múltiples médicos)
+    medicosAsignados: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Usuario'
+    }],
     // Campos para recuperación de contraseña
     resetPasswordToken: {
         type: String

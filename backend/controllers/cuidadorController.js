@@ -1,6 +1,7 @@
 import Usuario from '../models/usuario.js';
 import Foto from '../models/foto.js';
 import Grabacion from '../models/grabacion.js';
+import AnalisisCognitivo from '../models/analisisCognitivo.js';
 import { uploadImageToR2 } from '../services/uploadService.js';
 
 // Obtener paciente asociado al cuidador
@@ -199,6 +200,74 @@ export const getPatientRecordings = async (req, res) => {
 
         res.json(grabacionesFormateadas);
     } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Obtener grabaciones con análisis cognitivo (para línea de tiempo)
+export const getRecordingsWithAnalysis = async (req, res) => {
+    try {
+        const cuidador = await Usuario.findById(req.usuario._id);
+        
+        if (!cuidador || cuidador.rol !== 'cuidador/familiar') {
+            return res.status(403).json({ error: 'No autorizado' });
+        }
+
+        if (!cuidador.pacienteAsociado) {
+            return res.status(404).json({ error: 'No tienes un paciente asociado' });
+        }
+
+        // Obtener grabaciones del paciente
+        const grabaciones = await Grabacion.find({ pacienteId: cuidador.pacienteAsociado })
+            .populate('photoId', 'etiqueta url_contenido')
+            .sort({ createdAt: -1 });
+
+        // Obtener todos los análisis cognitivos de las grabaciones
+        const grabacionIds = grabaciones.map(g => g._id);
+        const analisis = await AnalisisCognitivo.find({ grabacionId: { $in: grabacionIds } });
+        
+        // Crear un mapa de análisis por grabacionId para búsqueda rápida
+        const analisisMap = new Map();
+        analisis.forEach(a => {
+            analisisMap.set(a.grabacionId.toString(), a);
+        });
+
+        // Mapear para incluir análisis cognitivo
+        const grabacionesFormateadas = grabaciones.map(grabacion => {
+            const analisisCognitivo = analisisMap.get(grabacion._id.toString());
+            
+            return {
+                _id: grabacion._id,
+                photoId: grabacion.photoId?._id,
+                fotoUrl: grabacion.photoId?.url_contenido || '',
+                fecha: grabacion.createdAt,
+                duracion: grabacion.duracion,
+                audioUrl: grabacion.audioUrl,
+                nota: grabacion.photoId?.etiqueta || '',
+                descripcionTexto: grabacion.descripcionTexto,
+                transcripcion: grabacion.transcripcion,
+                tipoContenido: grabacion.tipoContenido,
+                analisisCognitivo: analisisCognitivo ? {
+                    _id: analisisCognitivo._id,
+                    coherencia: analisisCognitivo.coherencia,
+                    claridad: analisisCognitivo.claridad,
+                    riquezaLexica: analisisCognitivo.riquezaLexica,
+                    memoria: analisisCognitivo.memoria,
+                    emocion: analisisCognitivo.emocion,
+                    orientacion: analisisCognitivo.orientacion,
+                    razonamiento: analisisCognitivo.razonamiento,
+                    atencion: analisisCognitivo.atencion,
+                    puntuacionGlobal: analisisCognitivo.puntuacionGlobal,
+                    observaciones: analisisCognitivo.observaciones,
+                    alertas: analisisCognitivo.alertas,
+                    createdAt: analisisCognitivo.createdAt
+                } : undefined
+            };
+        });
+
+        res.json(grabacionesFormateadas);
+    } catch (error) {
+        console.error('Error en getRecordingsWithAnalysis:', error);
         res.status(500).json({ error: error.message });
     }
 };

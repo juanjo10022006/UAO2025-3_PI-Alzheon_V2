@@ -62,10 +62,16 @@ app.use('/api', router);
 
 connectDB();
 
-// Iniciar worker de recordatorios (consulta periódica)
-startReminderWorker();
+// Iniciar worker de recordatorios (consulta periódica) sólo si no es entorno de test
+if (process.env.NODE_ENV !== 'test') {
+    startReminderWorker();
+}
 
 const PORT = process.env.PORT || 5500;
-app.listen(PORT,  () => {
-    console.log(`Server is running on port ${PORT}`);
-})
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT,  () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+export default app;

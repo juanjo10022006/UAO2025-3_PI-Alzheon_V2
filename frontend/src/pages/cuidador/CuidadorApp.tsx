@@ -5,6 +5,7 @@ import { CuidadorNavbar } from '../../components/Cuidador/Navbar/CuidadorNavbar'
 import { CuidadorDashboard } from '../../components/Cuidador/Dashboard/CuidadorDashboard'
 import { CuidadorPhotos } from '../../components/Cuidador/GestionFotos/CuidadorPhotos'
 import { CuidadorProgress } from '../../components/Cuidador/Progreso/CuidadorProgress'
+import { LineaTiempoEvolucion } from '../../components/Cuidador/LineaTiempo/LineaTiempoEvolucion'
 import {
   CuidadorPhoto,
   CuidadorRecording,
@@ -295,6 +296,10 @@ export const CuidadorApp = () => {
                   loading={recordingsLoading}
                 />
               }
+            />
+            <Route
+              path="linea-tiempo"
+              element={<LineaTiempoEvolucion />}
             />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
           </Routes>

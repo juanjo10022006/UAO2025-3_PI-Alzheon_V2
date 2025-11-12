@@ -82,6 +82,108 @@ export interface DoctorStats {
   totalFotos: number
   totalGrabaciones: number
   grabacionesEstaSemana: number
+  alertasNoLeidas?: number
+}
+
+// ========== INTERFACES DE ANÁLISIS COGNITIVO ==========
+
+export interface CognitiveMetrics {
+  coherencia: number
+  claridad: number
+  riquezaLexica: number
+  memoria: number
+  emocion: number
+  orientacion: number
+  razonamiento: number
+  atencion: number
+}
+
+export interface AnalisisCognitivo {
+  _id: string
+  pacienteId: string
+  grabacionId: {
+    _id: string
+    fecha: string
+    tipoContenido: string
+  }
+  esLineaBase: boolean
+  coherencia: number
+  claridad: number
+  riquezaLexica: number
+  memoria: number
+  emocion: number
+  orientacion: number
+  razonamiento: number
+  atencion: number
+  palabrasUnicas: number
+  pausas: number
+  repeticiones: number
+  puntuacionGlobal: number
+  alertas?: string[]
+  recomendaciones?: string[]
+  observaciones?: string
+  fechaAnalisis: string
+}
+
+export interface Desviacion {
+  metrica: string
+  valorBase: number
+  valorActual: number
+  porcentajeDesviacion: number
+}
+
+export interface AlertaCognitiva {
+  _id: string
+  pacienteId: {
+    _id: string
+    nombre: string
+    email: string
+  }
+  analisisId: AnalisisCognitivo
+  severidad: 'baja' | 'media' | 'alta' | 'critica'
+  desviaciones: Desviacion[]
+  mensaje: string
+  recomendaciones: string[]
+  leida: boolean
+  leidaPor?: string
+  fechaLectura?: string
+  acciones: {
+    medicoId: string
+    tipo: string
+    descripcion: string
+    fecha: string
+  }[]
+  fechaAlerta: string
+}
+
+export interface ReporteCognitivo {
+  paciente: {
+    id: string
+    nombre: string
+    email: string
+  }
+  medico: {
+    id: string
+    nombre: string
+    email: string
+  }
+  periodo: {
+    inicio: string
+    fin: string
+  }
+  lineaBase?: AnalisisCognitivo
+  promedios: CognitiveMetrics & { puntuacionGlobal: number }
+  totalAnalisis: number
+  totalAlertas: number
+  alertasPorSeveridad: {
+    critica: number
+    alta: number
+    media: number
+    baja: number
+  }
+  analisis: AnalisisCognitivo[]
+  alertasRecientes: AlertaCognitiva[]
+  tiempoGeneracion: number
 }
 
 // Obtener estadísticas generales del médico
@@ -157,4 +259,97 @@ export const assignCaregiverToPatient = async (
     pacienteId,
     cuidadorId,
   })
+}
+
+// ========== FUNCIONES DE ANÁLISIS COGNITIVO ==========
+
+// Obtener línea base cognitiva de un paciente
+export const fetchLineaBase = async (pacienteId: string): Promise<AnalisisCognitivo> => {
+  const { data } = await medicoApiClient.get(`/api/medico/pacientes/${pacienteId}/linea-base`)
+  return data
+}
+
+// Obtener historial de análisis cognitivos
+export const fetchAnalisisCognitivo = async (
+  pacienteId: string,
+  params?: {
+    fechaInicio?: string
+    fechaFin?: string
+    limit?: number
+  }
+): Promise<{
+  analisis: AnalisisCognitivo[]
+  promedios: CognitiveMetrics & { puntuacionGlobal: number }
+  total: number
+}> => {
+  const { data } = await medicoApiClient.get(`/api/medico/pacientes/${pacienteId}/analisis`, {
+    params,
+  })
+  return data
+}
+
+// Obtener alertas cognitivas no leídas
+export const fetchAlertas = async (): Promise<AlertaCognitiva[]> => {
+  const { data } = await medicoApiClient.get('/api/medico/alertas')
+  return data
+}
+
+// Obtener historial de alertas con filtros
+export const fetchHistorialAlertas = async (params?: {
+  pacienteId?: string
+  severidad?: string
+  leida?: boolean
+  fechaInicio?: string
+  fechaFin?: string
+}): Promise<AlertaCognitiva[]> => {
+  const { data } = await medicoApiClient.get('/api/medico/alertas/historial', { params })
+  return data
+}
+
+// Marcar alerta como leída
+export const marcarAlertaLeida = async (alertaId: string): Promise<AlertaCognitiva> => {
+  const { data } = await medicoApiClient.post(`/api/medico/alertas/${alertaId}/leer`)
+  return data
+}
+
+// Registrar acción sobre una alerta
+export const registrarAccionAlerta = async (
+  alertaId: string,
+  accion: {
+    tipo: string
+    descripcion: string
+  }
+): Promise<AlertaCognitiva> => {
+  const { data } = await medicoApiClient.post(`/api/medico/alertas/${alertaId}/accion`, accion)
+  return data
+}
+
+// Actualizar umbrales de configuración
+export const actualizarUmbrales = async (config: {
+  umbralDesviacion?: number
+  severidades?: {
+    baja: { min: number; max: number }
+    media: { min: number; max: number }
+    alta: { min: number; max: number }
+    critica: { min: number; max: number }
+  }
+}): Promise<void> => {
+  await medicoApiClient.put('/api/medico/configuracion/umbrales', config)
+}
+
+// Generar reporte completo de un paciente
+// Generar reporte cognitivo en PDF
+export const generarReporte = async (
+  pacienteId: string,
+  params?: {
+    fechaInicio?: string
+    fechaFin?: string
+    encriptar?: boolean
+  }
+): Promise<Blob> => {
+  const response = await medicoApiClient.get(`/api/medico/pacientes/${pacienteId}/reporte`, {
+    params,
+    responseType: 'blob', // Importante: recibir como blob
+  })
+  return response.data
 }
