@@ -6,7 +6,7 @@ import axios from 'axios';
  */
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = 'gemini-2.0-flash-exp'; // Modelo más rápido sin thinking tokens
+const GEMINI_MODEL = 'gemini-2.5-flash'; // Modelo rápido y confiable
 
 /**
  * Analizar texto usando Vertex AI para detectar patrones cognitivos
