@@ -15,5 +15,9 @@ export default defineConfig({
     strictPort: true,
     host: true,
     origin: 'http://0.0.0.0:8080',
+    proxy: {
+       '/api': { target: 'http://localhost:5500', changeOrigin: true, secure: false },
+       '/uploads': { target: 'http://localhost:5500', changeOrigin: true, secure: false },
+       '/assets': { target: 'http://localhost:5500', changeOrigin: true, secure: false },},
    },
 })

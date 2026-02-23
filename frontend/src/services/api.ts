@@ -73,7 +73,7 @@ export interface CognitiveAssignment {
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '',
   withCredentials: true,
 })
 
