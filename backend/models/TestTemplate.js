@@ -11,7 +11,7 @@ const testTemplateSchema = new mongoose.Schema(
             enum: ["firma", "dibujo"],
             required: true
         },
-        instruciones: {
+        instrucciones: {
             type: String
         },
         assetUrl: {

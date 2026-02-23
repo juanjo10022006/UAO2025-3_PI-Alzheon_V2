@@ -16,7 +16,7 @@ async function ensureDefaultTemplates() {
     {
       nombre: "Firma y fecha",
       tipo: "firma",
-      instruciones: "Realiza tu firma y escribe la fecha.",
+      instrucciones: "Realiza tu firma y escribe la fecha.",
       assetUrl: "/assets/templates/firma-fecha-v1.pdf",
       version: 1,
       isActivo: true
@@ -24,7 +24,7 @@ async function ensureDefaultTemplates() {
     {
       nombre: "Repetición de dibujo",
       tipo: "dibujo",
-      instruciones: "Realiza el mismo dibujo indicado en la plantilla.",
+      instrucciones: "Realiza el mismo dibujo indicado en la plantilla.",
       assetUrl: "/assets/templates/repetir-dibujo-v1.pdf",
       version: 1,
       isActivo: true
@@ -88,7 +88,7 @@ export async function listMyAssignmentsService({ user }) {
   }
 
   return TestAssignment.find({ pacienteId, estado: "activo" })
-    .populate("plantillaId", "nombre tipo instruciones assetUrl version isActivo")
+    .populate("plantillaId", "nombre tipo instrucciones assetUrl version isActivo")
     .populate("doctorId", "nombre email")
     .sort({ createdAt: -1 });
 }
