@@ -1,8 +1,8 @@
 import {
-  listTemplates,
-  assignTemplateToPatient,
-  listMyAssignments,
-  createSubmission,
-  listPatientSubmissions
+  listTemplatesService,
+  assignTemplateToPatientService,
+  listMyAssignmentsService,
+  createSubmissionService,
+  listPatientSubmissionsService
 } from "../controllers/cognitiveController.js";
 

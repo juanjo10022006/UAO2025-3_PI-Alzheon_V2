@@ -38,9 +38,9 @@ const testAssignmentSchema = mongoose.Schema(
 
    
 )
-testAssignmentSchema.index({ pacienteId: 1, status:1});
+testAssignmentSchema.index({ pacienteId: 1, estado:1});
 
-testAssignmentSchema.index({doctorId:1, status:1});
+testAssignmentSchema.index({doctorId:1, estado:1});
 
 testAssignmentSchema.index({doctorId:1}).index({plantillaId:1});
 
