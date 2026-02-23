@@ -4,7 +4,7 @@ const testSubmissionSchema = new mongoose.Schema(
     {
         asignacionId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "TestAssigment",
+            ref: "TestAssignment",
             required: true
         },
         pacienteId: {
