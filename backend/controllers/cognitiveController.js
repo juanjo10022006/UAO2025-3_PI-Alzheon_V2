@@ -4,7 +4,7 @@ import {
   listMyAssignmentsService,
   createSubmissionService,
   listPatientSubmissionsService
-} from "../services/cogniteService";
+} from "../services/cogniteService.js";
 
 function handleError(res, err) {
   const status = err.status || 500;
