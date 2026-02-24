@@ -388,3 +388,31 @@ export const assignTemplateToPatient = async (payload: {
   })
   return data.asignacion
 }
+
+export interface CognitiveSubmission {
+  _id: string
+  asignacionId: string
+  pacienteId: string
+  doctorId: string
+  plantillaId: {
+    _id: string
+    nombre: string
+    tipo: 'firma' | 'dibujo'
+    assetUrl: string
+    version: number
+  }
+  subidoPor: { _id: string; nombre?: string; rol?: string } | string
+  assetUrl: string // ej: /uploads/submissions/xxx.pdf
+  mimeType: string
+  nombreOriginal: string
+  tamano: number
+  notas?: string
+  createdAt: string
+}
+
+export const getBackendBaseUrl = () => API_BASE_URL
+
+export const fetchPatientCognitiveSubmissions = async (pacienteId: string): Promise<CognitiveSubmission[]> => {
+  const { data } = await medicoApiClient.get(`/api/v2/resultados/paciente/${pacienteId}`)
+  return data.submissions as CognitiveSubmission[]
+}
