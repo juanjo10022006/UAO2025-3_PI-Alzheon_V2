@@ -2,6 +2,7 @@ import Usuario from "../models/usuario.js";
 import TestTemplate from "../models/TestTemplate.js";
 import TestAssignment from "../models/TestAssignment.js";
 import TestSubmission from "../models/TestSubmission.js";
+import { analizarArchivoCognitivoConGemini } from "./geminiCognitiveAnalysisService.js";
 
 function includesObjectId(arr, id) {
   if (!Array.isArray(arr)) return false;
@@ -110,8 +111,11 @@ export async function createSubmissionService({ user, idAsignacion, file, notas 
     throw Object.assign(new Error("Esta asignación no pertenece a este paciente"), { status: 403 });
   }
 
+  const plantilla = await TestTemplate.findById(asignacion.plantillaId).lean();
+
   const assetUrl = `/uploads/submissions/${file.filename}`;
 
+  // 1) Guardar submission primero
   const submission = await TestSubmission.create({
     asignacionId: asignacion._id,
     pacienteId: asignacion.pacienteId,
@@ -124,8 +128,51 @@ export async function createSubmissionService({ user, idAsignacion, file, notas 
     nombreOriginal: file.originalname,
     tamano: file.size,
 
-    notas: notas || ""
+    notas: notas || "",
+
+    analisisIA: process.env.GEMINI_API_KEY_VIL
+      ? { estado: "pendiente" }
+      : { estado: "omitido", error: "GEMINI_API_KEY_VIL no configurada" }
   });
+
+  // 2) Intentar análisis IA (sin romper el flujo principal si falla)
+  if (process.env.GEMINI_API_KEY_VIL) {
+    try {
+      const aiResult = await analizarArchivoCognitivoConGemini({
+        file,
+        plantilla,
+        notas
+      });
+
+      if (aiResult.ok) {
+        submission.analisisIA = {
+          estado: "completado",
+          proveedor: "gemini",
+          modelo: aiResult.model,
+          generadoEn: new Date(),
+          resultadoJson: aiResult.parsed || null,
+          resultadoTexto: aiResult.rawText || ""
+        };
+      } else {
+        submission.analisisIA = {
+          estado: "fallido",
+          proveedor: "gemini",
+          generadoEn: new Date(),
+          error: aiResult.reason || "No se pudo analizar"
+        };
+      }
+
+      await submission.save();
+    } catch (error) {
+      submission.analisisIA = {
+        estado: "fallido",
+        proveedor: "gemini",
+        generadoEn: new Date(),
+        error: error.message || "Error al analizar con IA"
+      };
+      await submission.save();
+    }
+  }
 
   return submission;
 }

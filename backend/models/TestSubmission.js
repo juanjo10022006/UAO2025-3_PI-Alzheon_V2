@@ -1,4 +1,24 @@
 import mongoose from "mongoose";
+const analisisIASchema = mongoose.Schema({
+    estado: {
+        trype: String,
+        enum: ["pendiente", "completado", "fallido", "omitido"],
+        default: "omitido"
+    },
+    provedor: {
+        type: String
+    },
+    modelo: {
+        type: String
+    },
+    generadoEn: {
+        type: Date
+    },
+    resultadoJson: { type: mongoose.Schema.Types.Mixed },
+    resultadoTexto: { type: String }, 
+    error: { type: String }
+}, {_id: false})
+
 
 const testSubmissionSchema = new mongoose.Schema(
   {
@@ -43,6 +63,10 @@ const testSubmissionSchema = new mongoose.Schema(
     },
     notas: { 
         type: String, 
+    },
+    analisisIA: {
+        type: analisisIASchema,
+        default: () => ({estado:omitido})
     }
   },
   { timestamps: true }

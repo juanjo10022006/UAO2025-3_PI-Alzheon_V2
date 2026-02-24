@@ -63,7 +63,7 @@ app.use(express.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 
 // Plantillas PDF David-Vila
-app.use("/assets/templates", express.static(path.join(process.cwd(), "asset/templates")));
+app.use("/assets/templates", express.static(path.join(process.cwd(), "assets", "templates")));
 
 // Servir archivos estáticos desde la carpeta uploads
 app.use('/uploads', express.static('uploads'));
