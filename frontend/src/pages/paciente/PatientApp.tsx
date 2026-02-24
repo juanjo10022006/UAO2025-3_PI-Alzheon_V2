@@ -6,6 +6,7 @@ import { PatientDashboard } from '../../components/Paciente/Dashboard/PatientDas
 import { PatientPhotos } from '../../components/Paciente/MisFotos/PatientPhotos'
 import { PatientRecordings } from '../../components/Paciente/MisGrabaciones/PatientRecordings'
 import { PatientSettings } from '../../components/Paciente/Configuracion/PatientSettings'
+import { PatientDocuments } from '../../components/Paciente/Documentos/PatientDocuments'
 import {
   PatientPhoto,
   PatientProfile,
@@ -131,11 +132,11 @@ export const PatientApp = () => {
     })
   }, [recordings])
 
-  const handleUploadRecording = async (payload: { 
-    photoId: string, 
-    audio?: Blob, 
-    duration?: number,
-    descripcionTexto?: string 
+  const handleUploadRecording = async (payload: {
+    photoId: string
+    audio?: Blob
+    duration?: number
+    descripcionTexto?: string
   }) => {
     try {
       await uploadPatientRecording({
@@ -147,7 +148,7 @@ export const PatientApp = () => {
 
       const relatedPhoto = photos.find((photo) => photo._id === payload.photoId)
       const localAudioUrl = payload.audio ? URL.createObjectURL(payload.audio) : undefined
-      
+
       setRecordings((prev) => [
         {
           _id: `temp-${Date.now()}`,
@@ -191,7 +192,7 @@ export const PatientApp = () => {
     }
   }
 
-  const handleChangePassword = async (payload: { currentPassword: string, newPassword: string }) => {
+  const handleChangePassword = async (payload: { currentPassword: string; newPassword: string }) => {
     await updatePatientPassword(payload)
   }
 
@@ -203,11 +204,11 @@ export const PatientApp = () => {
 
   if (status === 'checking') {
     return (
-      <div className="min-h-screen patient-gradient-bg flex items-center justify-center text-white">
-        <div className="glass-panel px-10 py-6 text-center">
-          <p className="text-lg font-semibold tracking-wide">Preparando tu experiencia...</p>
+        <div className="min-h-screen patient-gradient-bg flex items-center justify-center text-white">
+          <div className="glass-panel px-10 py-6 text-center">
+            <p className="text-lg font-semibold tracking-wide">Preparando tu experiencia...</p>
+          </div>
         </div>
-      </div>
     )
   }
 
@@ -216,62 +217,52 @@ export const PatientApp = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col patient-gradient-bg">
-      <Navbar />
+      <div className="min-h-screen flex flex-col patient-gradient-bg">
+        <Navbar />
 
-      <main className="flex-1 pb-12">
-        <PatientNavbar userName={user.nombre ?? 'Paciente'} userEmail={user.email} />
+        <main className="flex-1 pb-12">
+          <PatientNavbar userName={user.nombre ?? 'Paciente'} userEmail={user.email} />
 
-        <div className="mx-auto max-w-6xl space-y-10 px-4 sm:px-6">
-          <Routes>
-            <Route
-              path="dashboard"
-            element={
-              <PatientDashboard
-                userName={user.nombre ?? 'Paciente'}
-                sessionsCompleted={sessionsThisWeek}
-                weeklyGoal={4}
-                nextReminder={reminders}
-                recentRecordingDate={latestRecordingDate}
-                photoCount={photos.length}
-                onNavigate={(path) => navigate(path)}
+          <div className="mx-auto max-w-6xl space-y-10 px-4 sm:px-6">
+            <Routes>
+              <Route
+                  path="dashboard"
+                  element={
+                    <PatientDashboard
+                        userName={user.nombre ?? 'Paciente'}
+                        sessionsCompleted={sessionsThisWeek}
+                        weeklyGoal={4}
+                        nextReminder={reminders}
+                        recentRecordingDate={latestRecordingDate}
+                        photoCount={photos.length}
+                        onNavigate={(path) => navigate(path)}
+                    />
+                  }
               />
-            }
-          />
-          <Route
-            path="fotos"
-            element={
-              <PatientPhotos
-                photos={photos}
-                onUploadRecording={handleUploadRecording}
-                loading={photosLoading}
+              <Route
+                  path="fotos"
+                  element={<PatientPhotos photos={photos} onUploadRecording={handleUploadRecording} loading={photosLoading} />}
               />
-            }
-          />
-          <Route
-            path="grabaciones"
-            element={
-              <PatientRecordings recordings={recordings} loading={recordingsLoading} />
-            }
-          />
-          <Route
-            path="configuracion"
-            element={
-              <PatientSettings
-                reminders={reminders}
-                profile={profile}
-                onSaveReminders={handleSaveReminders}
-                onSaveProfile={handleSaveProfile}
-                onChangePassword={handleChangePassword}
+              <Route path="grabaciones" element={<PatientRecordings recordings={recordings} loading={recordingsLoading} />} />
+              <Route path="documentos" element={<PatientDocuments />} />
+              <Route
+                  path="configuracion"
+                  element={
+                    <PatientSettings
+                        reminders={reminders}
+                        profile={profile}
+                        onSaveReminders={handleSaveReminders}
+                        onSaveProfile={handleSaveProfile}
+                        onChangePassword={handleChangePassword}
+                    />
+                  }
               />
-            }
-          />
-            <Route path="*" element={<Navigate to="dashboard" replace />} />
-          </Routes>
-        </div>
-      </main>
+              <Route path="*" element={<Navigate to="dashboard" replace />} />
+            </Routes>
+          </div>
+        </main>
 
-      <Footer />
-    </div>
+        <Footer />
+      </div>
   )
 }
