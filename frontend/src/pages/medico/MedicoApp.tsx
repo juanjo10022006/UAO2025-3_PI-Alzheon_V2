@@ -27,6 +27,7 @@ import {
 // Importar los componentes del médico (los crearemos después)
 import { MedicoDashboard } from '../../components/Medico/Dashboard/MedicoDashboard'
 import { MedicoPatients } from '../../components/Medico/Pacientes/MedicoPatients'
+import { AssignTemplateToPatient } from '../../components/Medico/Cognitivo/AssignTemplateToPatient'
 import { MedicoPatientDetail } from '../../components/Medico/DetallesPaciente/MedicoPatientDetail'
 import { MedicoNavbar } from '../../components/Medico/Navbar/MedicoNavbar'
 
@@ -198,6 +199,7 @@ export const MedicoApp = () => {
               }
             />
             <Route path="*" element={<Navigate to="dashboard" replace />} />
+            <Route path="pacientes/:id/asignar-plantilla" element={<AssignTemplateToPatient />} />
           </Routes>
         </div>
       </main>
