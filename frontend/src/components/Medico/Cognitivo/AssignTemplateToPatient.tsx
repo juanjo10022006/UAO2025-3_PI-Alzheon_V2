@@ -24,8 +24,9 @@ export const AssignTemplateToPatient = () => {
             try {
                 const data = await fetchCognitiveTemplates()
                 setTemplates(data.filter((t) => t.isActivo))
-            } catch {
-                toast.error('No se pudieron cargar las plantillas')
+            } catch (e: any) {
+                console.error('ERROR plantillas:', e?.response?.status, e?.response?.data, e?.message)
+                toast.error(e?.response?.data?.error ?? 'No se pudieron cargar las plantillas')
             } finally {
                 setLoading(false)
             }
@@ -48,7 +49,8 @@ export const AssignTemplateToPatient = () => {
             toast.success('Plantilla asignada correctamente')
             navigate(`/medico/pacientes/${id}`)
         } catch (e: any) {
-            toast.error(e?.response?.data?.error ?? 'No se pudo asignar la plantilla')
+            console.error('ERROR plantillas:', e?.response?.status, e?.response?.data, e?.message)
+            toast.error(e?.response?.data?.error ?? 'No se pudieron cargar las plantillas')
         }
     }
 
