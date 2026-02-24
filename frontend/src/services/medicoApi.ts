@@ -353,3 +353,38 @@ export const generarReporte = async (
   })
   return response.data
 }
+
+// Cognitivo
+export type CognitiveTemplateType = 'firma' | 'dibujo'
+export type CognitiveAssignmentFrequency = 'semanal' | 'mensual' | 'trimestral'
+
+export interface CognitiveTemplate {
+  _id: string
+  nombre: string
+  tipo: CognitiveTemplateType
+  instrucciones?: string
+  assetUrl: string
+  version: number
+  isActivo: boolean
+}
+
+export const fetchCognitiveTemplates = async (): Promise<CognitiveTemplate[]> => {
+  const { data } = await apiClient.get('/api/v2/plantillas')
+  return data.plantillas as CognitiveTemplate[]
+}
+
+export const assignTemplateToPatient = async (payload: {
+  idPaciente: string
+  plantillaId: string
+  frecuencia: CognitiveAssignmentFrequency
+  fechaInicio: string
+  fechaEntrega?: string
+}) => {
+  const { data } = await apiClient.post(`/api/v2/asignar/paciente/${payload.idPaciente}`, {
+    plantillaId: payload.plantillaId,
+    frecuencia: payload.frecuencia,
+    fechaInicio: payload.fechaInicio,
+    fechaEntrega: payload.fechaEntrega,
+  })
+  return data.asignacion
+}
