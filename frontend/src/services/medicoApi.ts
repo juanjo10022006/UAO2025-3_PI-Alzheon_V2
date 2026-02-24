@@ -369,7 +369,7 @@ export interface CognitiveTemplate {
 }
 
 export const fetchCognitiveTemplates = async (): Promise<CognitiveTemplate[]> => {
-  const { data } = await apiClient.get('/api/v2/plantillas')
+  const { data } = await medicoApiClient.get('/api/v2/plantillas')
   return data.plantillas as CognitiveTemplate[]
 }
 
@@ -380,7 +380,7 @@ export const assignTemplateToPatient = async (payload: {
   fechaInicio: string
   fechaEntrega?: string
 }) => {
-  const { data } = await apiClient.post(`/api/v2/asignar/paciente/${payload.idPaciente}`, {
+  const { data } = await medicoApiClient.post(`/api/v2/asignar/paciente/${payload.idPaciente}`, {
     plantillaId: payload.plantillaId,
     frecuencia: payload.frecuencia,
     fechaInicio: payload.fechaInicio,
