@@ -13,6 +13,7 @@ import {
 } from '../../../services/medicoApi'
 import { AnalisisCognitivoView } from './AnalisisCognitivoView'
 
+
 interface MedicoPatientDetailProps {
   caregivers: Caregiver[]
   onAssignCaregiver: (pacienteId: string, cuidadorId: string) => Promise<void>
@@ -110,6 +111,14 @@ export const MedicoPatientDetail = ({
           >
             <HiUserPlus className="text-xl" />
             Asignar Cuidador
+          </button>
+
+          <button
+              type="button"
+              onClick={() => navigate(`/medico/pacientes/${patient._id}/asignar-plantilla`)}
+              className="glass-button rounded-full px-5 py-2 text-sm font-semibold text-white"
+          >
+            Asignar plantilla cognitiva
           </button>
         </div>
       </div>
