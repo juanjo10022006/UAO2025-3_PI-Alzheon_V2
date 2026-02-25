@@ -188,7 +188,7 @@ export const PatientDocuments = () => {
                                         >
                                             {uploading ? 'Subiendo...' : 'Subir resultado'}
                                         </button>
-                                        <p className="text-xs text-white/60">El backend acepta máximo 10MB.</p>
+                                        <p className="text-xs text-white/60">El peso máximo de los archivos es 10MB.</p>
                                     </div>
                                 </div>
                             </>
