@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const analisisIASchema = mongoose.Schema({
     estado: {
-        trype: String,
+        type: String,
         enum: ["pendiente", "completado", "fallido", "omitido"],
         default: "omitido"
     },
@@ -66,7 +66,7 @@ const testSubmissionSchema = new mongoose.Schema(
     },
     analisisIA: {
         type: analisisIASchema,
-        default: () => ({estado:omitido})
+        default: () => ({estado:"omitido"})
     }
   },
   { timestamps: true }

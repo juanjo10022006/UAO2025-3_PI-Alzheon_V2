@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import { GoogleGenAI } from "@google/genai";
 
 const apiKey = process.env.GEMINI_API_KEY_VILA;
-const modelName = process.env.GEMINI_MODEL_VILA;
+const modelName = process.env.GEMINI_MODEL_VILA || "gemini-2.0-flash";
 
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 

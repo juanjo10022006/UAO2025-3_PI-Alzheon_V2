@@ -115,7 +115,6 @@ export async function createSubmissionService({ user, idAsignacion, file, notas 
 
   const assetUrl = `/uploads/submissions/${file.filename}`;
 
-  // 1) Guardar submission primero
   const submission = await TestSubmission.create({
     asignacionId: asignacion._id,
     pacienteId: asignacion.pacienteId,
@@ -126,17 +125,17 @@ export async function createSubmissionService({ user, idAsignacion, file, notas 
     assetUrl,
     mimeType: file.mimetype,
     nombreOriginal: file.originalname,
-    tamano: file.size,
+    tamaño: file.size,
 
     notas: notas || "",
 
-    analisisIA: process.env.GEMINI_API_KEY_VIL
+    analisisIA: process.env.GEMINI_API_KEY_VILA
       ? { estado: "pendiente" }
-      : { estado: "omitido", error: "GEMINI_API_KEY_VIL no configurada" }
+      : { estado: "omitido", error: "GEMINI_API_KEY_VILA no configurada" }
   });
 
   // 2) Intentar análisis IA (sin romper el flujo principal si falla)
-  if (process.env.GEMINI_API_KEY_VIL) {
+  if (process.env.GEMINI_API_KEY_VILA) {
     try {
       const aiResult = await analizarArchivoCognitivoConGemini({
         file,
