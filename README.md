@@ -2,38 +2,92 @@
 
 Sistema de monitoreo y análisis cognitivo para pacientes con Alzheimer. Permite a pacientes, cuidadores y médicos colaborar en el seguimiento de la evolución cognitiva mediante grabaciones de voz, análisis con IA, gestión de fotos y **gestión de documentos cognitivos con firma**.
 
-## Novedades (Módulo Cognitivo – Documentos y Firmas)
+## Novedades (Módulo Cognitivo – Documentos, Firmas y Análisis IA)
 
 ### Funcionalidades
 - **Paciente**
-    - Ver asignaciones de plantillas cognitivas.
-    - Firmar directamente en la página (canvas) y subir el resultado.
-    - Descargar/Imprimir plantillas en PDF y subir el documento firmado (PDF/JPG/PNG).
+  - Ver asignaciones de plantillas cognitivas.
+  - Firmar directamente en la página (canvas) y subir el resultado.
+  - Descargar/Imprimir plantillas en PDF y subir el documento firmado (PDF/JPG/PNG).
+  - Generación automática de **análisis IA (Gemini)** al subir resultados (cuando aplica).
 - **Médico**
-    - Asignar plantillas cognitivas a pacientes (frecuencia y fechas).
-    - Ver y descargar los archivos subidos por el paciente.
+  - Asignar plantillas cognitivas a pacientes (frecuencia y fechas).
+  - Ver y descargar los archivos subidos por el paciente.
+  - Ver el **análisis IA (Gemini)** asociado a cada archivo (si existe).
 - **Cuidador**
-    - Ver y descargar los archivos subidos por el paciente (requiere habilitación de permisos en backend para lectura).
+  - Ver y descargar los archivos subidos por el paciente.
+  - Ver el **análisis IA (Gemini)** asociado a cada archivo (si existe y según permisos).
 
 ### Rutas (Frontend)
 - Paciente: `/paciente/documentos`
 - Médico:
-    - Asignar plantilla: `/medico/pacientes/:id/asignar-plantilla`
-    - Ver documentos del paciente: dentro del detalle del paciente (tab “Documentos”)
+  - Asignar plantilla: `/medico/pacientes/:id/asignar-plantilla`
+  - Ver documentos del paciente: dentro del detalle del paciente (tab “Documentos”)
 - Cuidador: `/cuidador/documentos`
 
-### Endpoints (Backend – v2)
+---
+
+## Endpoints (Backend – v2)
+
+### Plantillas y asignaciones
 - `GET /api/v2/plantillas` (médico)
 - `POST /api/v2/asignar/paciente/:idPaciente` (médico)
 - `GET /api/v2/mis/asignaciones` (paciente/cuidador)
-- `POST /api/v2/resultados/asignacion/:idAsignacion` (paciente/cuidador, multipart/form-data, campo `file`)
+
+### Resultados (submissions)
+- `POST /api/v2/resultados/asignacion/:idAsignacion` (paciente/cuidador, `multipart/form-data`, campo `file`)
 - `GET /api/v2/resultados/paciente/:idPaciente` (médico)
-  > Para cuidador: habilitar lectura en backend si aplica a tu modelo de permisos.
+  - (opcional) cuidador según permisos del backend
 
 ### Archivos estáticos
-- Plantillas PDF servidas desde: `/assets/templates/*`
+- Plantillas PDF: `/assets/templates/*`
 - Resultados subidos: `/uploads/*`
-> Alinear nombres de archivos en disco con los `assetUrl` almacenados en BD.
+
+---
+
+## Análisis IA (Gemini) – Formato esperado
+
+El backend guarda el análisis dentro del campo `analisisIA` del submission. **El JSON clínico final está anidado en `analisisIA.resultadoJson`.**
+
+### Estructura de `analisisIA`
+```json
+{
+  "estado": "completado|omitido|fallido",
+  "modelo": "gemini-2.5-flash",
+  "generadoEn": "2026-02-25T21:55:29.848Z",
+  "resultadoJson": {
+    "tipoPrueba": "firma|dibujo|otro",
+    "resumenObservacional": "string",
+    "indicadores": [
+      {
+        "nombre": "legibilidad|alineacion|coherencia_trazo|estructura_dibujo|orientacion_temporal|motricidad_fina|otro",
+        "observacion": "string",
+        "nivel": "bajo|medio|alto|no_evaluable"
+      }
+    ],
+    "comparabilidadFutura": {
+      "util": true,
+      "motivo": "string"
+    },
+    "alertas": ["string"],
+    "calidadArchivo": {
+      "nivel": "buena|media|baja",
+      "motivo": "string"
+    },
+    "recomendacionParaMedico": "string",
+    "descargo": "Análisis automatizado de apoyo, no reemplaza criterio médico."
+  },
+  "resultadoTexto": "string (opcional)",
+  "error": "string (si estado=omitido|fallido)"
+}
+```
+
+### Estados posibles
+- `completado`: existe `resultadoJson` y se debe renderizar el análisis.
+- `omitido`: no se generó análisis (ej: tipo de archivo no soportado, tamaño 0, configuración faltante). Puede traer `error`.
+- `fallido`: hubo un error en la ejecución. Debe mostrarse `error` y permitir inspección del archivo igualmente.
+
+> Nota: en algunos registros antiguos se observó error por variable de entorno no configurada, ejemplo: `GEMINI_API_KEY_VILA no configurada`.
 
 ---
 
@@ -43,8 +97,8 @@ Sistema de monitoreo y análisis cognitivo para pacientes con Alzheimer. Permite
 
 #### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/Joseligos/PI-Alzheon.git
-cd PI-Alzheon
+git clone https://github.com/TUPROYECTO
+cd TUPROYECTO
 ```
 
 #### 2. Configurar Backend
@@ -56,7 +110,7 @@ npm install
 Crear archivo `.env` en la carpeta `backend`:
 ```env
 MONGO_URI=tu_cadena_de_conexión
-PORT=8080
+PORT=5500
 JWT_SECRET=tu_clave_secreta
 NODE_ENV=development
 
@@ -72,6 +126,8 @@ R2_ENDPOINT=tu_endpoint
 
 ASSEMBLYAI_API_KEY=tu_api
 GEMINI_API_KEY=tu_api
+GEMINI_API_KEY_VILA=tu_otro_api
+GEMINI_MODEL_VILA=tu_modelo
 
 # Configuración de Análisis
 UMBRAL_DESVIACION_DEFECTO=
@@ -95,14 +151,13 @@ npm install
 
 Crear archivo `.env` en la carpeta `frontend`:
 ```env
-VITE_BACKEND_URL=http://localhost:8080
+VITE_BACKEND_URL=http://localhost:5500
 ```
 
 Iniciar la aplicación:
 ```bash
 npm run dev
 ```
-El frontend estará disponible en `http://localhost:8080` (según configuración de Vite).
 
 ---
 
