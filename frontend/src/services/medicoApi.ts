@@ -1,4 +1,6 @@
 import axios from 'axios'
+import type { GeminiCognitiveAnalysis } from '../types/gemini.ts'
+
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5500'
 
@@ -408,6 +410,7 @@ export interface CognitiveSubmission {
   tamano: number
   notas?: string
   createdAt: string
+  analisisIA?: GeminiCognitiveAnalysis
 }
 
 export const getBackendBaseUrl = () => API_BASE_URL

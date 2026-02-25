@@ -7,6 +7,7 @@ import {
     uploadCognitiveSubmission,
 } from '../../../services/api'
 import { SignaturePad } from './SignaturePad'
+import type { GeminiCognitiveAnalysis } from '../../../types/gemini.ts'
 
 export const PatientDocuments = () => {
     const [loading, setLoading] = useState(true)
@@ -15,6 +16,8 @@ export const PatientDocuments = () => {
     const [fileToUpload, setFileToUpload] = useState<File | null>(null)
     const [notas, setNotas] = useState('')
     const [uploading, setUploading] = useState(false)
+    const [lastGeminiAnalysis, setLastGeminiAnalysis] = useState<GeminiCognitiveAnalysis | null>(null)
+
 
     const backend = useMemo(() => getBackendBaseUrl(), [])
 
@@ -53,6 +56,8 @@ export const PatientDocuments = () => {
             toast.success('Documento subido correctamente')
             setFileToUpload(null)
             setNotas('')
+            const res = await uploadCognitiveSubmission({ idAsignacion: selected._id, file: fileToUpload, notas })
+            setLastGeminiAnalysis(res.analisisIA ?? null)
         } catch (e: any) {
             toast.error(e?.response?.data?.error ?? 'No se pudo subir el documento')
         } finally {
@@ -152,6 +157,43 @@ export const PatientDocuments = () => {
                                 {/* Subida de archivo */}
                                 <div className="glass-card p-6 space-y-4">
                                     <p className="patient-section-title">Subir documento</p>
+                                    {lastGeminiAnalysis && (
+                                        <div className="glass-card p-6 text-white space-y-3">
+                                            <p className="patient-section-title">Análisis IA (Gemini)</p>
+
+                                            <div className="text-sm text-white/80">
+                                                <div><b>Tipo:</b> {lastGeminiAnalysis.tipoPrueba}</div>
+                                                <div className="mt-2"><b>Resumen:</b> {lastGeminiAnalysis.resumenObservacional}</div>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <p className="text-sm font-semibold">Indicadores</p>
+                                                {lastGeminiAnalysis.indicadores.map((i, idx) => (
+                                                    <div key={idx} className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="font-semibold">{i.nombre}</span>
+                                                            <span className="text-xs text-white/70">{i.nivel}</span>
+                                                        </div>
+                                                        <div className="text-white/70 mt-1">{i.observacion}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="text-sm text-white/80">
+                                                <div><b>Calidad archivo:</b> {lastGeminiAnalysis.calidadArchivo.nivel} — {lastGeminiAnalysis.calidadArchivo.motivo}</div>
+                                                <div className="mt-2"><b>Recomendación:</b> {lastGeminiAnalysis.recomendacionParaMedico}</div>
+                                                {lastGeminiAnalysis.alertas?.length ? (
+                                                    <div className="mt-2">
+                                                        <b>Alertas:</b>
+                                                        <ul className="list-disc ml-5 text-white/70">
+                                                            {lastGeminiAnalysis.alertas.map((a, idx) => <li key={idx}>{a}</li>)}
+                                                        </ul>
+                                                    </div>
+                                                ) : null}
+                                                <div className="mt-3 text-xs text-white/60">{lastGeminiAnalysis.descargo}</div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <div className="space-y-2">
                                         <label className="text-sm text-white/80 font-semibold">Archivo (PNG/JPG/PDF)</label>

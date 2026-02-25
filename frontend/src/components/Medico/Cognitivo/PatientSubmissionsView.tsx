@@ -7,6 +7,7 @@ import {
     getBackendBaseUrl,
 } from '../../../services/medicoApi'
 
+
 interface Props {
     pacienteId: string
 }
@@ -63,6 +64,10 @@ export const PatientSubmissionsView = ({ pacienteId }: Props) => {
             ) : (
                 <div className="space-y-3">
                     {items.map((s) => {
+                        const aiMeta = s.analisisIA as any
+                        const ai = aiMeta?.resultadoJson ?? null // <-- AQUÍ está tu estructura
+                        const indicadores = Array.isArray(ai?.indicadores) ? ai.indicadores : []
+                        const alertas = Array.isArray(ai?.alertas) ? ai.alertas : []
                         const url = `${backend}${s.assetUrl}`
                         return (
                             <div key={s._id} className="rounded-2xl border border-white/15 bg-white/5 p-4">
@@ -88,6 +93,70 @@ export const PatientSubmissionsView = ({ pacienteId }: Props) => {
                                             Abrir
                                         </button>
                                     </a>
+                                    {aiMeta && (
+                                        <details className="mt-3">
+                                            <summary className="cursor-pointer text-sm text-white/80">
+                                                Ver análisis IA (Gemini)
+                                            </summary>
+
+                                            <div className="mt-2 rounded-2xl border border-white/10 bg-black/20 p-3 text-xs text-white whitespace-pre-wrap">
+                                                {/* Estados sin resultado */}
+                                                {aiMeta.estado !== 'completado' && (
+                                                    <div className="text-white/80">
+                                                        <div><b>Estado:</b> {aiMeta.estado}</div>
+                                                        {aiMeta.error ? <div className="mt-1"><b>Error:</b> {aiMeta.error}</div> : null}
+                                                    </div>
+                                                )}
+
+                                                {/* Estado completado: mostrar resultadoJson */}
+                                                {aiMeta.estado === 'completado' && ai && (
+                                                    <>
+                                                        <div><b>Modelo:</b> {aiMeta.modelo ?? '—'}</div>
+                                                        <div><b>Generado:</b> {aiMeta.generadoEn ? new Date(aiMeta.generadoEn).toLocaleString('es-ES') : '—'}</div>
+
+                                                        <div className="mt-2"><b>Tipo:</b> {ai.tipoPrueba}</div>
+                                                        <div className="mt-1"><b>Resumen:</b> {ai.resumenObservacional}</div>
+
+                                                        <div className="mt-2">
+                                                            <b>Indicadores:</b>
+                                                            {indicadores.length ? (
+                                                                <ul className="list-disc ml-5">
+                                                                    {indicadores.map((i: any, idx: number) => (
+                                                                        <li key={idx}>
+                                                                            {i.nombre} – {i.nivel}: {i.observacion}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            ) : (
+                                                                <div className="text-white/70 mt-1">No hay indicadores.</div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="mt-2">
+                                                            <b>Calidad:</b> {ai.calidadArchivo?.nivel ?? '—'} – {ai.calidadArchivo?.motivo ?? '—'}
+                                                        </div>
+
+                                                        <div className="mt-2">
+                                                            <b>Recomendación:</b> {ai.recomendacionParaMedico ?? '—'}
+                                                        </div>
+
+                                                        {alertas.length > 0 && (
+                                                            <div className="mt-2">
+                                                                <b>Alertas:</b>
+                                                                <ul className="list-disc ml-5">
+                                                                    {alertas.map((a: string, idx: number) => <li key={idx}>{a}</li>)}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="mt-3 text-white/60 text-[10px]">
+                                                            {ai.descargo ?? 'Análisis automatizado de apoyo, no reemplaza criterio médico.'}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </details>
+                                    )}
                                 </div>
                             </div>
                         )

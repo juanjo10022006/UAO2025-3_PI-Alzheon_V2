@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { GeminiCognitiveAnalysis } from '../types/gemini.ts'
 
 export interface PatientPhoto {
   _id: string
@@ -142,14 +143,19 @@ export const uploadCognitiveSubmission = async (payload: {
   idAsignacion: string
   file: File
   notas?: string
-}) => {
+}): Promise<{ submission: any; analisisIA?: GeminiCognitiveAnalysis }> => {
   const form = new FormData()
   form.append('file', payload.file)
   if (payload.notas) form.append('notas', payload.notas)
 
-  const { data } = await apiClient.post(`/api/v2/resultados/asignacion/${payload.idAsignacion}`, form, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  const { data } = await apiClient.post(
+      `/api/v2/resultados/asignacion/${payload.idAsignacion}`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
 
-  return data.submission
+  return {
+    submission: data.submission,
+    analisisIA: data.analisisIA ?? null,
+  }
 }
