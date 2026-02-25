@@ -56,8 +56,6 @@ export const PatientDocuments = () => {
             toast.success('Documento subido correctamente')
             setFileToUpload(null)
             setNotas('')
-            const res = await uploadCognitiveSubmission({ idAsignacion: selected._id, file: fileToUpload, notas })
-            setLastGeminiAnalysis(res.analisisIA ?? null)
         } catch (e: any) {
             toast.error(e?.response?.data?.error ?? 'No se pudo subir el documento')
         } finally {
