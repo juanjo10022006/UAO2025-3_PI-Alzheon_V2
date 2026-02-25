@@ -63,7 +63,10 @@ export async function createSubmissionController(req, res) {
       notas
     });
 
-    res.status(201).json({ submission });
+    res.status(201).json({
+      submission,
+      analisisIA: submission.analisisIA ?? null,
+    });
   } catch (err) {
     handleError(res, err);
   }

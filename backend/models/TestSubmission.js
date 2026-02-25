@@ -67,7 +67,8 @@ const testSubmissionSchema = new mongoose.Schema(
     analisisIA: {
         type: analisisIASchema,
         default: () => ({estado:"omitido"})
-    }
+    },
+    geminiAnalysis: { type: mongoose.Schema.Types.Mixed, default: null },
   },
   { timestamps: true }
 );
