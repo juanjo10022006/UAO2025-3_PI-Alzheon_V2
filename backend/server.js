@@ -5,6 +5,9 @@ import cookieParser from 'cookie-parser';
 import router from './routes/router.js';
 import connectDB from './config/db.js';
 import { startReminderWorker } from './jobs/reminderJob.js';
+//impotaciones nuevas
+import path from "path";
+import cognitiveRoutes from "./routes/cognitiveRoutes.js"
 
 dotenv.config();
 
@@ -18,6 +21,10 @@ const allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
 ];
 
 // Agregar orígenes adicionales desde .env si existen
@@ -55,9 +62,13 @@ app.use(express.json({limit: '50mb'}));
 app.use(express.urlencoded({limit: '50mb', extended: true}));
 app.use(cookieParser());
 
+// Plantillas PDF David-Vila
+app.use("/assets/templates", express.static(path.join(process.cwd(), "assets", "templates")));
+
 // Servir archivos estáticos desde la carpeta uploads
 app.use('/uploads', express.static('uploads'));
 
+app.use("/api/v2", cognitiveRoutes)
 app.use('/api', router);
 
 connectDB();

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import type { GeminiCognitiveAnalysis } from '../types/gemini.ts'
 
 export interface PatientPhoto {
   _id: string
@@ -44,12 +45,40 @@ export interface UploadRecordingPayload {
   descripcionTexto?: string
 }
 
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001'
+export type CognitiveTemplateType = 'firma' | 'dibujo'
+export type CognitiveAssignmentFrequency = 'semanal' | 'mensual' | 'trimestral'
+export type CognitiveAssignmentState = 'activo' | 'pausado'
+
+export interface CognitiveTemplate {
+  _id: string
+  nombre: string
+  tipo: CognitiveTemplateType
+  instrucciones?: string
+  assetUrl: string // ej: /assets/templates/firma-fecha-v1.pdf
+  version: number
+  isActivo: boolean
+}
+
+export interface CognitiveAssignment {
+  _id: string
+  pacienteId: string
+  doctorId: { _id: string; nombre?: string; email?: string } | string
+  plantillaId: CognitiveTemplate
+  frecuencia: CognitiveAssignmentFrequency
+  estado: CognitiveAssignmentState
+  fechaInicio: string
+  fechaEntrega?: string
+}
+
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5500'
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: '',
   withCredentials: true,
 })
+
+export const getBackendBaseUrl = () => API_BASE_URL
 
 export const fetchPatientPhotos = async (): Promise<PatientPhoto[]> => {
   const { data } = await apiClient.get('/api/paciente/fotos')
@@ -103,4 +132,30 @@ export const updatePatientProfile = async (profile: PatientProfile): Promise<Pat
 export const updatePatientPassword = async (payload: { currentPassword: string, newPassword: string }) => {
   const { data } = await apiClient.put('/api/paciente/perfil/password', payload)
   return data
+}
+
+export const fetchMyCognitiveAssignments = async (): Promise<CognitiveAssignment[]> => {
+  const { data } = await apiClient.get('/api/v2/mis/asignaciones')
+  return data.asignaciones as CognitiveAssignment[]
+}
+
+export const uploadCognitiveSubmission = async (payload: {
+  idAsignacion: string
+  file: File
+  notas?: string
+}): Promise<{ submission: any; analisisIA?: GeminiCognitiveAnalysis }> => {
+  const form = new FormData()
+  form.append('file', payload.file)
+  if (payload.notas) form.append('notas', payload.notas)
+
+  const { data } = await apiClient.post(
+      `/api/v2/resultados/asignacion/${payload.idAsignacion}`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
+
+  return {
+    submission: data.submission,
+    analisisIA: data.analisisIA ?? null,
+  }
 }

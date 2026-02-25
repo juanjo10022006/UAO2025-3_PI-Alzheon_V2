@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { HiArrowLeft, HiMicrophone, HiPhoto, HiUserPlus, HiBeaker } from 'react-icons/hi2'
+import { HiArrowLeft, HiMicrophone, HiPhoto, HiUserPlus, HiBeaker, HiDocumentText } from 'react-icons/hi2'
 import {
   PatientDetails,
   MedicoPhoto,
@@ -12,6 +12,8 @@ import {
   fetchPatientRecordings,
 } from '../../../services/medicoApi'
 import { AnalisisCognitivoView } from './AnalisisCognitivoView'
+import { PatientSubmissionsView } from '../Cognitivo/PatientSubmissionsView'
+
 
 interface MedicoPatientDetailProps {
   caregivers: Caregiver[]
@@ -31,7 +33,7 @@ export const MedicoPatientDetail = ({
   const [loading, setLoading] = useState(true)
   const [showCaregiverModal, setShowCaregiverModal] = useState(false)
   const [selectedCaregiver, setSelectedCaregiver] = useState('')
-  const [activeTab, setActiveTab] = useState<'general' | 'fotos' | 'grabaciones' | 'analisis'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'fotos' | 'grabaciones' | 'analisis' | 'documentos'>('general')
 
   useEffect(() => {
     const loadData = async () => {
@@ -111,6 +113,14 @@ export const MedicoPatientDetail = ({
             <HiUserPlus className="text-xl" />
             Asignar Cuidador
           </button>
+
+          <button
+              type="button"
+              onClick={() => navigate(`/medico/pacientes/${patient._id}/asignar-plantilla`)}
+              className="glass-button rounded-full px-5 py-2 text-sm font-semibold text-white"
+          >
+            Asignar plantilla cognitiva
+          </button>
         </div>
       </div>
 
@@ -158,6 +168,17 @@ export const MedicoPatientDetail = ({
         >
           <HiBeaker className="text-xl" />
           Análisis Cognitivo
+        </button>
+        <button
+            onClick={() => setActiveTab('documentos')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ${
+                activeTab === 'documentos'
+                    ? 'glass-button text-white'
+                    : 'bg-white/5 text-white/70 hover:bg-white/10'
+            }`}
+        >
+          <HiDocumentText className="text-xl" />
+          Documentos
         </button>
       </div>
 
@@ -451,6 +472,11 @@ export const MedicoPatientDetail = ({
           pacienteId={pacienteId}
           pacienteNombre={patient.nombre}
         />
+      )}
+
+      {/* Documentos (Tab) */}
+      {activeTab === 'documentos' && (
+          <PatientSubmissionsView pacienteId={pacienteId!} />
       )}
 
       {/* Modal: Asignar Cuidador */}
