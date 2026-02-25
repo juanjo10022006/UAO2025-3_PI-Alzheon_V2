@@ -151,7 +151,7 @@ export const PatientDocuments = () => {
 
                                 {/* Subida de archivo */}
                                 <div className="glass-card p-6 space-y-4">
-                                    <p className="patient-section-title">Subir documento firmado</p>
+                                    <p className="patient-section-title">Subir documento</p>
 
                                     <div className="space-y-2">
                                         <label className="text-sm text-white/80 font-semibold">Archivo (PNG/JPG/PDF)</label>
